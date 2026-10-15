@@ -7,10 +7,9 @@
 // Qué se dibuja (1032×812, la medida óptima de Google):
 // - Fondo: la hero que subió el negocio (cover) con degradado para legibilidad,
 //   o el color de fondo del programa si no hay hero.
-// - Encima: badges circulares en filas de 5 al 80% — lleno = acento,
-//   pendiente = gris apagado. La imagen de sello del negocio va DENTRO del
-//   badge (color pleno / atenuada); con emoji se dibuja solo el badge
-//   (en servidor no hay fuente emoji). Sin números ni barra.
+// - Encima: la imagen de sello del negocio pura (pleno color / gris atenuada,
+//   transparencia intacta) o badges circulares si usa emoji (sin fuente emoji
+//   en servidor). Filas de 5 al 80%, sin números ni barra.
 //
 // El texto Progreso/Premios deja de mandarse como módulos de texto del objeto:
 // ahora vive dentro de esta imagen. Se pasa a Wallet con ?v=timestamp para
@@ -109,27 +108,27 @@ export async function renderCardHero(i: CardHeroInput): Promise<Buffer> {
   const fg = hasBase ? "#FFFFFF" : i.textColor || "#F0F0EE";
   const FONT = "DejaVu Sans, sans-serif";
 
-  // 2. Grilla de badges circulares (una por sello) en filas de 5 al 80%.
-  // Lleno = círculo de acento. Pendiente = círculo gris apagado.
-  // Si el negocio subió imagen de sello, el icono va DENTRO del badge
-  // (a todo color si lleno, atenuado si pendiente); si usa emoji/texto
-  // el badge solo ya indica el estado (en servidor no hay fuente emoji).
-  // Cada fila se centra: las incompletas (ej. 12 sellos → 5+5+2) quedan al medio.
+  // 2. Grilla de badges circulares SOLO cuando no hay imagen de sello
+  // (programas con emoji/texto; en servidor no hay fuente emoji).
+  // Con imagen subida no se dibuja nada: van los iconos puros.
+  // Filas de 5 al 80% del ancho, centradas vertical y horizontalmente.
   const useStampImages = !!i.stampImageUrl;
   const badgeR = cell / 2;
   let badges = "";
-  for (let r = 0; r < rows; r++) {
-    const inRow = Math.min(cols, goal - r * cols);
-    const rowW = inRow * cell + (inRow - 1) * gap;
-    const x0 = (W - rowW) / 2 + badgeR;
-    const cy = y0 + r * (cell + gap) + badgeR;
-    for (let k = 0; k < inRow; k++) {
-      const idx = r * cols + k;
-      const cx = x0 + k * (cell + gap);
-      badges +=
-        idx < done
-          ? `<circle cx="${cx}" cy="${cy}" r="${badgeR}" fill="${accent}"/>`
-          : `<circle cx="${cx}" cy="${cy}" r="${badgeR}" fill="#ffffff" fill-opacity="0.16"/>`;
+  if (!useStampImages) {
+    for (let r = 0; r < rows; r++) {
+      const inRow = Math.min(cols, goal - r * cols);
+      const rowW = inRow * cell + (inRow - 1) * gap;
+      const x0 = (W - rowW) / 2 + badgeR;
+      const cy = y0 + r * (cell + gap) + badgeR;
+      for (let k = 0; k < inRow; k++) {
+        const idx = r * cols + k;
+        const cx = x0 + k * (cell + gap);
+        badges +=
+          idx < done
+            ? `<circle cx="${cx}" cy="${cy}" r="${badgeR}" fill="${accent}"/>`
+            : `<circle cx="${cx}" cy="${cy}" r="${badgeR}" fill="#ffffff" fill-opacity="0.16"/>`;
+      }
     }
   }
 
@@ -149,15 +148,19 @@ export async function renderCardHero(i: CardHeroInput): Promise<Buffer> {
 
   let composed = sharp(baseBuf).composite([{ input: Buffer.from(overlay), top: 0, left: 0 }]);
 
-  // 3. Iconos reales del negocio (imagen de sello) DENTRO de cada badge,
-  // a todo color si el sello está ganado, atenuados si pendientes.
-  // El badge de fondo ya dibujado evita el efecto "cuadrado gris".
+  // 3. Iconos reales del negocio (imagen de sello) puros, sin círculos.
+  // Ganado = color pleno. Pendiente = misma imagen en grises y atenuada.
+  // La transparencia se conserva: el fondo NO se pinta de gris, se ve la hero.
   if (useStampImages) {
     const raw = await fetchBuffer(i.stampImageUrl!);
     if (raw) {
       try {
-        const icon = Math.round(cell * 0.62);
-        const full = await sharp(raw).resize(icon, icon, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+        const full = await sharp(raw).resize(cell, cell, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer();
+        const dimmed = await sharp(raw)
+          .resize(cell, cell, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+          .grayscale()
+          .png()
+          .toBuffer();
         const parts: { input: Buffer; top: number; left: number; opacity?: number }[] = [];
         for (let r = 0; r < rows; r++) {
           const inRow = Math.min(cols, goal - r * cols);
@@ -166,18 +169,18 @@ export async function renderCardHero(i: CardHeroInput): Promise<Buffer> {
           const top = Math.round(y0 + r * (cell + gap));
           for (let k = 0; k < inRow; k++) {
             const idx = r * cols + k;
-            const off = Math.round((cell - icon) / 2);
+            const earned = idx < done;
             parts.push({
-              input: full,
-              top: top + off,
-              left: x0 + k * (cell + gap) + off,
-              opacity: idx < done ? 1 : 0.35,
+              input: earned ? full : dimmed,
+              top,
+              left: x0 + k * (cell + gap),
+              opacity: earned ? 1 : 0.55,
             });
           }
         }
         composed = composed.composite(parts);
       } catch {
-        // Si la imagen de sello falla, quedan los badges + premio. No se rompe nada.
+        // Si la imagen de sello falla, quedan la base + premio. No se rompe nada.
       }
     }
   }

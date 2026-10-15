@@ -87,8 +87,7 @@ function GeneratedHero({
     Array.from({ length: Math.min(cols, goal - r * cols) }, (_, k) => ({ filled: r * cols + k < done }))
   );
   const shown = rows.slice(0, 8);
-  const cellPx = cols <= 5 ? 30 : cols <= 10 ? 18 : 12;
-  const iconPx = Math.round(cellPx * 0.62);
+  const cellPx = cols <= 5 ? 34 : cols <= 10 ? 20 : 13;
   return (
     <div
       style={{
@@ -132,30 +131,31 @@ function GeneratedHero({
         >
           {shown.map((row, r) => (
             <div key={r} className="flex" style={{ width: "80%", gap: 6, alignItems: "center", justifyContent: "center" }}>
-              {row.map((c, k) => (
-                <div
-                  key={k}
-                  style={{
-                    width: cellPx, height: cellPx, borderRadius: "50%", flexShrink: 0,
-                    background: c.filled ? accent : "rgba(255,255,255,0.16)",
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
-                >
-                  {stampImageUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={stampImageUrl}
-                      alt=""
-                      style={{ width: iconPx, height: iconPx, objectFit: "contain", opacity: c.filled ? 1 : 0.35 }}
-                    />
-                  ) : null}
-                </div>
-              ))}
+              {row.map((c, k) =>
+                stampImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    key={k}
+                    src={stampImageUrl}
+                    alt=""
+                    style={{
+                      width: cellPx, height: cellPx, objectFit: "contain", flexShrink: 0,
+                      filter: c.filled ? "none" : "grayscale(1)",
+                      opacity: c.filled ? 1 : 0.55,
+                    }}
+                  />
+                ) : (
+                  <div
+                    key={k}
+                    style={{
+                      width: cellPx, height: cellPx, borderRadius: "50%", flexShrink: 0,
+                      background: c.filled ? accent : "rgba(255,255,255,0.16)",
+                    }}
+                  />
+                )
+              )}
             </div>
           ))}
-          {rowCount > 8 ? (
-            <span style={{ fontSize: 10, opacity: 0.7 }}>+{(rowCount - 8) * cols}</span>
-          ) : null}
         </div>
         <p style={{ fontSize: 11, margin: 0, opacity: 0.95, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
           Premio: {reward || "—"}
