@@ -148,6 +148,23 @@ export function Scanner() {
     }
   }
 
+  async function resync() {
+    if (!selected) return;
+    setBusy(true);
+    setError(null);
+    setMsg(null);
+    try {
+      const res = await fetch(`/api/loyalty/cards/${selected.id}/resync`, { method: "POST" });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "Falló la sincronización.");
+      setMsg("Wallet sincronizada ✅ (reabrí Google Wallet en unos minutos)");
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Falló la sincronización.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <Card>
@@ -209,6 +226,11 @@ export function Scanner() {
                 Canjear premio
               </Button>
             )}
+          </div>
+          <div style={{ marginTop: 8 }}>
+            <Button onClick={resync} disabled={busy} variant="secondary" style={{ width: "100%" }}>
+              Sincronizar Wallet
+            </Button>
           </div>
         </Card>
       )}
