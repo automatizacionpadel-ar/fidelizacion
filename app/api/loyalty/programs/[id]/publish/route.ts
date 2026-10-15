@@ -18,7 +18,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   let wallet_warning: string | null = null;
   if (walletConfigured()) {
     try {
-      google_class_id = await upsertClass(program);
+      google_class_id = await upsertClass(program, { issuerName: business.name });
     } catch (e) {
       wallet_warning = e instanceof Error ? e.message : "Wallet falló; igual se activa el programa.";
     }

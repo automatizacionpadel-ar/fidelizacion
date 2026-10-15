@@ -107,26 +107,35 @@ async function accessToken(): Promise<string> {
   return json.access_token;
 }
 
-export async function upsertClass(program: ProgramLike) {
+export async function upsertClass(program: ProgramLike, opts?: { issuerName?: string | null }) {
   const { issuerId } = config();
   if (!issuerId) throw new Error("Falta GOOGLE_WALLET_ISSUER_ID.");
   const token = await accessToken();
   const id = classId(program.id);
   const body = {
     id,
-    issuerName: program.card_title,
+    // Cabecera fija de Google: logo + emisor (chico) + programa (H1).
+    // El emisor es el NOMBRE DEL NEGOCIO para no duplicar el título.
+    issuerName: opts?.issuerName || program.card_title,
     programName: program.card_title,
     reviewStatus: "UNDER_REVIEW",
     // Logo cuadrado de Wallet si existe, si no el logo libre de la web.
-    // Google lo recorta en círculo: ideal PNG 660×660 con 15% de margen.
+    // Google lo recorta en círculo: ideal PNG 660×660 fundido sobre el fondo.
     programLogo: (program.wallet_logo_url ?? program.logo_url)
       ? { sourceUri: { uri: (program.wallet_logo_url ?? program.logo_url)! } }
       : undefined,
-    // Banner full-width del frente de la tarjeta (100% ancho).
-    // Óptimo: PNG 1032×812 (~5:4). Si no hay, Google muestra un fallback.
-    heroImage: program.hero_image_url
-      ? { sourceUri: { uri: program.hero_image_url } }
-      : undefined,
+    // La hero generada por tarjeta va ENCIMA del QR mediante la barcode
+    // section (firstTopDetail -> imageModulesData del objeto). No se manda
+    // heroImage de clase para no duplicarla debajo del código.
+    classTemplateInfo: {
+      cardBarcodeSectionDetails: {
+        firstTopDetail: {
+          fieldSelector: {
+            fields: [{ fieldPath: "object.imageModulesData['cardhero'].mainImage" }],
+          },
+        },
+      },
+    },
     hexBackgroundColor: (program.background_color ?? "#2A2A29").replace("#", "#"),
     rewardsTierLabel: "Sellos",
     rewardsTier: `Meta: ${program.goal ?? ""}`,
@@ -187,8 +196,10 @@ export async function createSaveLink(card: CardLike): Promise<string | null> {
           // Sin loyaltyPoints a propósito: el progreso vive solo en la hero
           // generada por tarjeta (sin números ni filas nativas).
           textModulesData: objectTextModules(card),
-          heroImage: card.hero_image_url
-            ? { sourceUri: { uri: card.hero_image_url } }
+          // Hero generada por tarjeta ENCIMA del QR (ver classTemplateInfo
+          // firstTopDetail en upsertClass). Un archivo que se sobrescribe.
+          imageModulesData: card.hero_image_url
+            ? [{ id: "cardhero", mainImage: { sourceUri: { uri: card.hero_image_url } } }]
             : undefined,
           barcode: { type: "QR_CODE", value: card.token },
         },
@@ -219,7 +230,9 @@ export async function updateObject(card: CardLike) {
     textModulesData: objectTextModules(card),
   };
   if (card.hero_image_url) {
-    patch.heroImage = { sourceUri: { uri: card.hero_image_url } };
+    patch.imageModulesData = [
+      { id: "cardhero", mainImage: { sourceUri: { uri: card.hero_image_url } } },
+    ];
   }
   const res = await fetch(
     `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${objectId(card.id)}`,

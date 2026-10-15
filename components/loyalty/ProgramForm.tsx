@@ -141,6 +141,9 @@ export function ProgramForm({
       const form = new FormData();
       form.append("file", file);
       form.append("kind", "wallet_logo");
+      // El color de fondo viaja para fundir el logo en un cuadrado pleno:
+      // Google rellena las transparencias de blanco, así el círculo se mimetiza.
+      form.append("bg", d.background_color);
       const res = await fetch("/api/loyalty/logo", { method: "POST", body: form });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "No se pudo subir el logo.");
@@ -396,8 +399,8 @@ export function ProgramForm({
                 <Label>Logo Wallet cuadrado (PNG/JPG/WebP, máx 2 MB)</Label>
                 <p style={{ fontSize: 12, color: "#9A9A96", marginTop: 4, lineHeight: 1.6 }}>
                   Solo para las billeteras. Ideal <strong style={{ color: "#F0F0EE" }}>PNG cuadrado 660×660</strong>:
-                  Google lo recorta en círculo (dejá 15% de margen) y Apple lo muestra chico arriba a la izquierda.
-                  Si no subís uno, se reutiliza el logo de la web.
+                  Google lo recorta en círculo. Lo fundimos sobre tu color de fondo para que no aparezca
+                  el círculo blanco (Google rellena las transparencias). Si no subís uno, se reutiliza el logo de la web.
                 </p>
                 <div className="flex gap-2 flex-wrap items-center" style={{ marginTop: 8 }}>
                   {d.wallet_logo_url ? (

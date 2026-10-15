@@ -6,16 +6,36 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Compresión server-side con sharp: las imágenes que sube el negocio
 // (logos, sellos, heroes) se redimensionan a su medida óptima y se
 // recomprimen sin pérdida visible, para que pesen poco en /f, /t y Wallet.
-async function optimize(buf: Buffer, kind: "logo" | "stamp" | "hero" | "wallet_logo", mime: string): Promise<Buffer> {
+//
+// Logo Wallet: Google NO respeta transparencias (rellena de blanco y pide
+// un cuadrado con fondo pleno). Si viene bgHex, el logo se centra fundido
+// sobre un cuadrado 660×660 de ese color: el círculo de Wallet se mimetiza
+// con la tarjeta y no aparece el fondo blanco.
+async function optimize(buf: Buffer, kind: "logo" | "stamp" | "hero" | "wallet_logo", mime: string, bgHex?: string): Promise<{ buf: Buffer; ext: string }> {
+  if (kind === "wallet_logo" && bgHex && /^#[0-9a-fA-F]{6}$/.test(bgHex)) {
+    const inner = await sharp(buf)
+      .resize({ width: 462, height: 462, fit: "inside", withoutEnlargement: true })
+      .png()
+      .toBuffer();
+    const meta = await sharp(inner).metadata();
+    const flat = await sharp({
+      create: { width: 660, height: 660, channels: 3, background: bgHex },
+    })
+      .composite([{ input: inner, top: Math.round((660 - (meta.height ?? 462)) / 2), left: Math.round((660 - (meta.width ?? 462)) / 2) }])
+      .png({ compressionLevel: 9 })
+      .toBuffer();
+    return { buf: flat, ext: "png" };
+  }
   const base =
     kind === "hero"
       ? sharp(buf).resize({ width: 1032, height: 812, fit: "inside", withoutEnlargement: true })
       : kind === "stamp"
         ? sharp(buf).resize({ width: 512, height: 512, fit: "inside", withoutEnlargement: true })
         : sharp(buf).resize({ width: 660, height: 660, fit: "inside", withoutEnlargement: true });
-  if (mime === "image/png") return base.png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
-  if (mime === "image/webp") return base.webp({ quality: 82 }).toBuffer();
-  return base.jpeg({ quality: 82, mozjpeg: true }).toBuffer();
+  const ext = mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+  if (mime === "image/png") return { buf: await base.png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer(), ext };
+  if (mime === "image/webp") return { buf: await base.webp({ quality: 82 }).toBuffer(), ext };
+  return { buf: await base.jpeg({ quality: 82, mozjpeg: true }).toBuffer(), ext };
 }
 
 export async function POST(req: Request) {
@@ -36,7 +56,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No puede pesar más de 2 MB." }, { status: 400 });
 
   const admin = createAdminClient();
-  const ext = file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg";
+  const bgHex = typeof form?.get("bg") === "string" ? (form.get("bg") as string) : undefined;
+  const raw = Buffer.from(await file.arrayBuffer());
+  // Si sharp falla con un archivo raro, se sube el original sin romper.
+  const optimized = await optimize(raw, kind, file.type, bgHex).catch(() => ({ buf: raw, ext: file.type === "image/png" ? "png" : file.type === "image/webp" ? "webp" : "jpg" }));
+  const { buf, ext } = optimized;
+  const mime = ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
   const path =
     kind === "stamp"
       ? `${business.id}/stamps/${Date.now()}.${ext}`
@@ -45,10 +70,7 @@ export async function POST(req: Request) {
         : kind === "wallet_logo"
           ? `${business.id}/wallet-logos/${Date.now()}.${ext}`
           : `${business.id}/${Date.now()}.${ext}`;
-  const raw = Buffer.from(await file.arrayBuffer());
-  // Si sharp falla con un archivo raro, se sube el original sin romper.
-  const buf = await optimize(raw, kind, file.type).catch(() => raw);
-  const { error } = await admin.storage.from("logos").upload(path, buf, { contentType: file.type, upsert: false });
+  const { error } = await admin.storage.from("logos").upload(path, buf, { contentType: mime, upsert: false });
   if (error) {
     // Si el bucket no existe, mensaje claro
     return NextResponse.json({ error: `No se pudo subir: ${error.message} (creá el bucket público "logos" en Supabase Storage).` }, { status: 400 });
