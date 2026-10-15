@@ -39,3 +39,28 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+# Dependencies
+node_modules/
+
+# Next.js
+.next/
+out/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Supabase local secrets
+supabase/.env.local
+supabase/migrations/
+
+# Claude Code local settings (may contain secrets)
+.claude/settings.local.json
+
+# TypeScript
+tsconfig.tsbuildinfo
+
+# OS
+.DS_Store
+.superpowers/
