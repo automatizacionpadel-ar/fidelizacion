@@ -124,18 +124,10 @@ export async function upsertClass(program: ProgramLike, opts?: { issuerName?: st
     programLogo: (program.wallet_logo_url ?? program.logo_url)
       ? { sourceUri: { uri: (program.wallet_logo_url ?? program.logo_url)! } }
       : undefined,
-    // La hero generada por tarjeta va ENCIMA del QR mediante la barcode
-    // section (firstTopDetail -> imageModulesData del objeto). No se manda
-    // heroImage de clase para no duplicarla debajo del código.
-    classTemplateInfo: {
-      cardBarcodeSectionDetails: {
-        firstTopDetail: {
-          fieldSelector: {
-            fields: [{ fieldPath: "object.imageModulesData['cardhero'].mainImage" }],
-          },
-        },
-      },
-    },
+    // OJO: Google NO permite hero a ancho completo entre título y QR.
+    // El firstTopDetail la renderiza en miniatura y encima duplica
+    // imageModulesData en detalles: triple imagen. Por eso la única hero es
+    // la nativa debajo del QR (heroImage), a ancho completo. (Verificado en vivo.)
     hexBackgroundColor: (program.background_color ?? "#2A2A29").replace("#", "#"),
     rewardsTierLabel: "Sellos",
     rewardsTier: `Meta: ${program.goal ?? ""}`,
@@ -196,10 +188,9 @@ export async function createSaveLink(card: CardLike): Promise<string | null> {
           // Sin loyaltyPoints a propósito: el progreso vive solo en la hero
           // generada por tarjeta (sin números ni filas nativas).
           textModulesData: objectTextModules(card),
-          // Hero generada por tarjeta ENCIMA del QR (ver classTemplateInfo
-          // firstTopDetail en upsertClass). Un archivo que se sobrescribe.
-          imageModulesData: card.hero_image_url
-            ? [{ id: "cardhero", mainImage: { sourceUri: { uri: card.hero_image_url } } }]
+          // ÚNICA hero: nativa debajo del QR, a ancho completo.
+          heroImage: card.hero_image_url
+            ? { sourceUri: { uri: card.hero_image_url } }
             : undefined,
           barcode: { type: "QR_CODE", value: card.token },
         },
@@ -228,11 +219,11 @@ export async function updateObject(card: CardLike) {
   const token = await accessToken();
   const patch: Record<string, unknown> = {
     textModulesData: objectTextModules(card),
+    // Limpia el experimento anterior (hero arriba + duplicada en detalles).
+    imageModulesData: [],
   };
   if (card.hero_image_url) {
-    patch.imageModulesData = [
-      { id: "cardhero", mainImage: { sourceUri: { uri: card.hero_image_url } } },
-    ];
+    patch.heroImage = { sourceUri: { uri: card.hero_image_url } };
   }
   const res = await fetch(
     `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${objectId(card.id)}`,

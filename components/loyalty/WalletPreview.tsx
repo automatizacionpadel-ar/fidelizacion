@@ -219,7 +219,12 @@ export function WalletPreview(p: WalletPreviewProps) {
             </div>
           </div>
 
-          {/* Hero generada por tarjeta (ancho completo, progreso solo en iconos) */}
+          {/* QR primero: Google lo impone antes de la hero, no se puede mover */}
+          <div style={{ marginTop: 12, background: "#fff", borderRadius: 10, padding: 10, textAlign: "center" }}>
+            <div style={{ fontSize: 11, color: "#1F1F1F", fontWeight: 700 }}>QR · se genera al guardar</div>
+          </div>
+
+          {/* ÚNICA hero: nativa debajo del QR, a ancho completo */}
           <GeneratedHero
             title={title}
             balance={balance}
@@ -234,15 +239,10 @@ export function WalletPreview(p: WalletPreviewProps) {
             stampImageUrl={p.stampImageUrl}
             bleed
           />
-
-          {/* Solo QR: el progreso ya vive en la imagen */}
-          <div style={{ marginTop: 12, background: "#fff", borderRadius: 10, padding: 10, textAlign: "center" }}>
-            <div style={{ fontSize: 11, color: "#1F1F1F", fontWeight: 700 }}>QR · se genera al guardar</div>
-          </div>
         </div>
         <p style={{ fontSize: 11, color: "#5C5C59", margin: "6px 0 0", maxWidth: 320, lineHeight: 1.5 }}>
-          Logo PNG 660×660 (1:1) — Google lo recorta en círculo, dejá 15% de margen. La hero se genera
-          por tarjeta (tu imagen + progreso encima), base PNG 1032×812. Sin texto debajo: el progreso vive en la imagen.
+          Logo PNG 660×660 fundido sobre tu fondo — sin círculo blanco. La hero generada por tarjeta
+          (tu imagen + progreso) va debajo del QR: Google no permite hero full-width arriba del código.
         </p>
       </div>
 

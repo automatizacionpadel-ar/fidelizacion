@@ -12,9 +12,9 @@
 //   en servidor). Filas de 5 al 80%, sin números ni barra.
 //
 // El texto Progreso/Premios deja de mandarse como módulos de texto del objeto:
-// ahora vive dentro de esta imagen, que viaja en imageModulesData del objeto
-// y se muestra ENCIMA del QR (firstTopDetail). Se pasa con ?v=timestamp para
-// saltear el caché de imágenes de Google sin crear archivos nuevos.
+// ahora vive dentro de esta imagen, que viaja como heroImage nativa del objeto
+// (debajo del QR, a ancho completo: el único slot full-width que Google
+// permite). Se pasa con ?v=timestamp para saltear el caché sin crear archivos.
 import sharp from "sharp";
 import { createAdminClient } from "@/lib/supabase/admin";
 
