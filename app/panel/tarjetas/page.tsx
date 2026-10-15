@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { DeleteProgramIconButton } from "@/components/loyalty/DeleteProgramIconButton";
 
 export const dynamic = "force-dynamic";
 
@@ -28,6 +29,15 @@ export default async function TarjetasPage() {
     .select("id,name,card_title,card_type,status,goal,branches(name)")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
+
+  const { data: cards } = await supabase
+    .from("loyalty_cards")
+    .select("program_id")
+    .eq("business_id", business.id);
+  const clientsByProgram = new Map<string, number>();
+  for (const c of cards ?? []) {
+    clientsByProgram.set(c.program_id, (clientsByProgram.get(c.program_id) ?? 0) + 1);
+  }
 
   return (
     <div>
@@ -68,10 +78,15 @@ export default async function TarjetasPage() {
                   ? ` · 📍 ${(p.branches as unknown as { name: string }).name}`
                   : ""}
               </p>
-              <div className="flex gap-2 flex-wrap" style={{ marginTop: 12 }}>
+              <div className="flex gap-2 flex-wrap" style={{ marginTop: 12, alignItems: "center" }}>
                 <Link href={`/panel/programas/${p.id}`}><Button variant="secondary">Editar</Button></Link>
                 <Link href={`/panel/${p.id}/qr`}><Button variant="secondary">Ver QR</Button></Link>
                 <Link href="/panel/escanear"><Button variant="secondary">Escanear</Button></Link>
+                <DeleteProgramIconButton
+                  programId={p.id}
+                  cardTitle={p.card_title}
+                  clients={clientsByProgram.get(p.id) ?? 0}
+                />
               </div>
             </Card>
           ))}
