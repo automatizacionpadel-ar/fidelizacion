@@ -23,6 +23,7 @@ export type WalletPreviewProps = {
   rewardDescription: string;
   backgroundColor: string;
   logoUrl?: string | null;
+  walletLogoUrl?: string | null;
   heroImageUrl?: string | null;
   stampIcon?: string | null;
   stampImageUrl?: string | null;
@@ -182,6 +183,8 @@ export function WalletPreview(p: WalletPreviewProps) {
   const balance = Math.min(3, Math.max(0, p.goal - 1));
   const title = p.cardTitle || "Tu tarjeta";
   const issuer = p.businessName || "Tu negocio";
+  // Logo cuadrado de Wallet si existe, si no el de la web (igual que Google).
+  const walletLogo = p.walletLogoUrl ?? p.logoUrl;
 
   return (
     <div className="flex flex-col gap-5">
@@ -193,10 +196,10 @@ export function WalletPreview(p: WalletPreviewProps) {
         <div style={{ background: bg, color: fg, borderRadius: 16, padding: "16px 16px 16px", maxWidth: 320, overflow: "hidden" }}>
           {/* Cabecera real: logo circular + emisor + programa */}
           <div className="flex items-center gap-2">
-            {p.logoUrl ? (
+            {walletLogo ? (
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={p.logoUrl}
+                src={walletLogo}
                 alt="logo"
                 style={{ width: 40, height: 40, borderRadius: "50%", objectFit: "cover", background: "#fff", flexShrink: 0 }}
               />
@@ -252,10 +255,10 @@ export function WalletPreview(p: WalletPreviewProps) {
           {/* Barra superior real: logo chico a la izquierda, SIN círculo ni números */}
           <div className="flex items-center" style={{ padding: "12px 14px 8px" }}>
             <div className="flex items-center gap-2" style={{ minWidth: 0 }}>
-              {p.logoUrl ? (
+              {walletLogo ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={p.logoUrl}
+                  src={walletLogo}
                   alt="logo"
                   style={{ height: 25, width: "auto", maxWidth: 120, objectFit: "contain", display: "block" }}
                 />

@@ -8,6 +8,7 @@ type ProgramLike = {
   card_title: string;
   background_color?: string | null;
   logo_url?: string | null;
+  wallet_logo_url?: string | null;
   hero_image_url?: string | null;
   reward_description?: string | null;
   goal?: number | null;
@@ -116,8 +117,10 @@ export async function upsertClass(program: ProgramLike) {
     issuerName: program.card_title,
     programName: program.card_title,
     reviewStatus: "UNDER_REVIEW",
-    programLogo: program.logo_url
-      ? { sourceUri: { uri: program.logo_url } }
+    // Logo cuadrado de Wallet si existe, si no el logo libre de la web.
+    // Google lo recorta en círculo: ideal PNG 660×660 con 15% de margen.
+    programLogo: (program.wallet_logo_url ?? program.logo_url)
+      ? { sourceUri: { uri: (program.wallet_logo_url ?? program.logo_url)! } }
       : undefined,
     // Banner full-width del frente de la tarjeta (100% ancho).
     // Óptimo: PNG 1032×812 (~5:4). Si no hay, Google muestra un fallback.

@@ -24,6 +24,7 @@ export type ProgramDraft = {
   reward_value: number | null;
   terms: string;
   logo_url: string | null;
+  wallet_logo_url: string | null;
   hero_image_url: string | null;
   background_color: string;
   text_color: string;
@@ -49,6 +50,7 @@ const defaults: ProgramDraft = {
   reward_value: null,
   terms: "",
   logo_url: null,
+  wallet_logo_url: null,
   hero_image_url: null,
   background_color: "#2A2A29",
   text_color: "#F0F0EE",
@@ -132,8 +134,25 @@ export function ProgramForm({
     }
   }
 
-  async function uploadHero(file: File) {
+  async function uploadWalletLogo(file: File) {
     setUploading(true);
+    setError(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("kind", "wallet_logo");
+      const res = await fetch("/api/loyalty/logo", { method: "POST", body: form });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error ?? "No se pudo subir el logo.");
+      set("wallet_logo_url", json.logo_url);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "No se pudo subir el logo.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function uploadHero(file: File) {    setUploading(true);
     setError(null);
     try {
       const form = new FormData();
@@ -296,7 +315,10 @@ export function ProgramForm({
               Acá el diseño es libre: colores, tipografía y plantilla sí se aplican.
             </div>
             <div>
-              <Label>Logo (PNG/JPG/WebP, máx 2 MB)</Label>
+              <Label>Logo de la web (PNG/JPG/WebP, máx 2 MB)</Label>
+              <p style={{ fontSize: 12, color: "#9A9A96", marginTop: 4 }}>
+                Solo para la página de captación: se ve grande al 80% del ancho, vale cuadrado o rectangular.
+              </p>
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/webp"
@@ -371,12 +393,40 @@ export function ProgramForm({
             <div className="grid gap-4 md:grid-cols-2">
               <ColorField label="Fondo Wallet (único color que respetan)" value={d.background_color} onChange={(v) => set("background_color", v)} />
               <div>
-                <Label>Logo Wallet</Label>
-                <p style={{ fontSize: 13, color: "#9A9A96", marginTop: 6, lineHeight: 1.6 }}>
-                  {d.logo_url
-                    ? "✓ Se usa el mismo logo de captación. Ideal cuadrado PNG 660×660: Google lo recorta en círculo (dejá 15% de margen); Apple lo muestra chico arriba a la izquierda (hasta 480×150)."
-                    : "Subí un logo en el paso 3 — se reutiliza acá en chico."}
+                <Label>Logo Wallet cuadrado (PNG/JPG/WebP, máx 2 MB)</Label>
+                <p style={{ fontSize: 12, color: "#9A9A96", marginTop: 4, lineHeight: 1.6 }}>
+                  Solo para las billeteras. Ideal <strong style={{ color: "#F0F0EE" }}>PNG cuadrado 660×660</strong>:
+                  Google lo recorta en círculo (dejá 15% de margen) y Apple lo muestra chico arriba a la izquierda.
+                  Si no subís uno, se reutiliza el logo de la web.
                 </p>
+                <div className="flex gap-2 flex-wrap items-center" style={{ marginTop: 8 }}>
+                  {d.wallet_logo_url ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={d.wallet_logo_url}
+                      alt="logo wallet"
+                      style={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover", border: "1px solid #3D3D3B", background: "#fff" }}
+                    />
+                  ) : null}
+                  <label style={{ fontSize: 14, color: "#9A9A96", cursor: "pointer", border: "1px solid #3D3D3B", borderRadius: 10, padding: "8px 12px" }}>
+                    {uploading ? "Subiendo..." : d.wallet_logo_url ? "Cambiar logo Wallet" : "Subir logo cuadrado"}
+                    <input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp"
+                      style={{ display: "none" }}
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadWalletLogo(f); }}
+                    />
+                  </label>
+                  {d.wallet_logo_url && (
+                    <button
+                      type="button"
+                      onClick={() => set("wallet_logo_url", null)}
+                      style={{ fontSize: 13, color: "#f87171", background: "none", border: "none", cursor: "pointer" }}
+                    >
+                      Usar el de la web
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
             <div>
@@ -520,6 +570,7 @@ export function ProgramForm({
               rewardDescription={d.reward_description}
               backgroundColor={d.background_color}
               logoUrl={d.logo_url}
+              walletLogoUrl={d.wallet_logo_url}
               heroImageUrl={d.hero_image_url}
               stampIcon={d.stamp_icon}
               stampImageUrl={d.stamp_image_url}

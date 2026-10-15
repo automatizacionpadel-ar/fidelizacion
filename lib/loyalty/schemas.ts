@@ -13,6 +13,7 @@ export const programSchema = z.object({
   reward_value: z.number().nullable().optional(),
   terms: z.string().max(500).default(""),
   logo_url: z.string().url().nullable().optional(),
+  wallet_logo_url: z.string().url().nullable().optional(),
   hero_image_url: z.string().url().nullable().optional(),
   background_color: z.string().default("#2A2A29"),
   text_color: z.string().default("#F0F0EE"),

@@ -6,13 +6,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 // Compresión server-side con sharp: las imágenes que sube el negocio
 // (logos, sellos, heroes) se redimensionan a su medida óptima y se
 // recomprimen sin pérdida visible, para que pesen poco en /f, /t y Wallet.
-async function optimize(buf: Buffer, kind: "logo" | "stamp" | "hero", mime: string): Promise<Buffer> {
+async function optimize(buf: Buffer, kind: "logo" | "stamp" | "hero" | "wallet_logo", mime: string): Promise<Buffer> {
   const base =
     kind === "hero"
       ? sharp(buf).resize({ width: 1032, height: 812, fit: "inside", withoutEnlargement: true })
-      : kind === "logo"
-        ? sharp(buf).resize({ width: 660, height: 660, fit: "inside", withoutEnlargement: true })
-        : sharp(buf).resize({ width: 512, height: 512, fit: "inside", withoutEnlargement: true });
+      : kind === "stamp"
+        ? sharp(buf).resize({ width: 512, height: 512, fit: "inside", withoutEnlargement: true })
+        : sharp(buf).resize({ width: 660, height: 660, fit: "inside", withoutEnlargement: true });
   if (mime === "image/png") return base.png({ compressionLevel: 9, adaptiveFiltering: true }).toBuffer();
   if (mime === "image/webp") return base.webp({ quality: 82 }).toBuffer();
   return base.jpeg({ quality: 82, mozjpeg: true }).toBuffer();
@@ -24,8 +24,8 @@ export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
   const file = form?.get("file") as File | null;
   const rawKind = form?.get("kind");
-  const kind = rawKind === "stamp" ? "stamp" : rawKind === "hero" ? "hero" : "logo";
-  const label = kind === "stamp" ? "una imagen" : kind === "hero" ? "una imagen hero" : "un logo";
+  const kind = rawKind === "stamp" ? "stamp" : rawKind === "hero" ? "hero" : rawKind === "wallet_logo" ? "wallet_logo" : "logo";
+  const label = kind === "stamp" ? "una imagen" : kind === "hero" ? "una imagen hero" : kind === "wallet_logo" ? "un logo cuadrado" : "un logo";
   if (!file) return NextResponse.json({ error: `Subí ${label}.` }, { status: 400 });
   // La hero viaja a Apple Wallet, que solo acepta PNG.
   if (kind === "hero" && file.type !== "image/png")
@@ -42,7 +42,9 @@ export async function POST(req: Request) {
       ? `${business.id}/stamps/${Date.now()}.${ext}`
       : kind === "hero"
         ? `${business.id}/heroes/${Date.now()}.${ext}`
-        : `${business.id}/${Date.now()}.${ext}`;
+        : kind === "wallet_logo"
+          ? `${business.id}/wallet-logos/${Date.now()}.${ext}`
+          : `${business.id}/${Date.now()}.${ext}`;
   const raw = Buffer.from(await file.arrayBuffer());
   // Si sharp falla con un archivo raro, se sube el original sin romper.
   const buf = await optimize(raw, kind, file.type).catch(() => raw);
