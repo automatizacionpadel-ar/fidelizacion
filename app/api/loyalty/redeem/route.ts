@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getMyBusiness } from "@/lib/loyalty/business";
 import { redeemSchema } from "@/lib/loyalty/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -42,31 +42,34 @@ export async function POST(req: Request) {
       .select("goal,stamp_icon,stamp_image_url,card_title,card_type,reward_description,background_color,text_color,accent_color,hero_image_url")
       .eq("id", full.program_id)
       .maybeSingle();
-    refreshCardHeroImage({
-      cardId: full.id,
-      backgroundColor: prog?.background_color ?? null,
-      textColor: prog?.text_color ?? null,
-      accentColor: prog?.accent_color ?? null,
-      cardTitle: prog?.card_title ?? "",
-      cardType: prog?.card_type ?? "stamps",
-      goal: prog?.goal ?? 0,
-      balance: full.balance,
-      rewardsAvailable: full.rewards_available,
-      rewardDescription: prog?.reward_description ?? null,
-      stampImageUrl: prog?.stamp_image_url ?? null,
-      baseHeroUrl: prog?.hero_image_url ?? null,
-    })
-      .catch(() => null)
-      .then((heroUrl) =>
-        updateObject({
-          id: full.id, program_id: full.program_id, balance: full.balance,
-          rewards_available: full.rewards_available, token: full.token,
-          goal: prog?.goal ?? null, stamp_icon: prog?.stamp_icon ?? null,
-          hero_image_url: heroUrl,
-        })
-      )
-      .then(() => admin.from("loyalty_cards").update({ pending_sync: false }).eq("id", full.id))
-      .catch(() => {});
+    const snapshot = { full, prog };
+    after(() =>
+      refreshCardHeroImage({
+        cardId: snapshot.full.id,
+        backgroundColor: snapshot.prog?.background_color ?? null,
+        textColor: snapshot.prog?.text_color ?? null,
+        accentColor: snapshot.prog?.accent_color ?? null,
+        cardTitle: snapshot.prog?.card_title ?? "",
+        cardType: snapshot.prog?.card_type ?? "stamps",
+        goal: snapshot.prog?.goal ?? 0,
+        balance: snapshot.full.balance,
+        rewardsAvailable: snapshot.full.rewards_available,
+        rewardDescription: snapshot.prog?.reward_description ?? null,
+        stampImageUrl: snapshot.prog?.stamp_image_url ?? null,
+        baseHeroUrl: snapshot.prog?.hero_image_url ?? null,
+      })
+        .catch(() => null)
+        .then((heroUrl) =>
+          updateObject({
+            id: snapshot.full.id, program_id: snapshot.full.program_id, balance: snapshot.full.balance,
+            rewards_available: snapshot.full.rewards_available, token: snapshot.full.token,
+            goal: snapshot.prog?.goal ?? null, stamp_icon: snapshot.prog?.stamp_icon ?? null,
+            hero_image_url: heroUrl,
+          })
+        )
+        .then(() => admin.from("loyalty_cards").update({ pending_sync: false }).eq("id", snapshot.full.id))
+        .catch(() => {})
+    );
   }
   notifyN8n("redeem", { business_id: business.id, card_id: cardId });
   return NextResponse.json(result);

@@ -88,6 +88,7 @@ function GeneratedHero({
   );
   const shown = rows.slice(0, 8);
   const cellPx = cols <= 5 ? 30 : cols <= 10 ? 18 : 12;
+  const iconPx = Math.round(cellPx * 0.62);
   return (
     <div
       style={{
@@ -131,27 +132,25 @@ function GeneratedHero({
         >
           {shown.map((row, r) => (
             <div key={r} className="flex" style={{ width: "80%", gap: 6, alignItems: "center", justifyContent: "center" }}>
-              {row.map((c, k) =>
-                stampImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    key={k}
-                    src={stampImageUrl}
-                    alt=""
-                    style={{ width: cellPx, height: cellPx, objectFit: "contain", opacity: c.filled ? 1 : 0.4 }}
-                  />
-                ) : (
-                  <div
-                    key={k}
-                    style={{
-                      width: cellPx, height: cellPx, borderRadius: "50%", flexShrink: 0,
-                      background: c.filled ? accent : "transparent",
-                      border: c.filled ? "none" : "1px solid currentColor",
-                      opacity: c.filled ? 1 : 0.5,
-                    }}
-                  />
-                )
-              )}
+              {row.map((c, k) => (
+                <div
+                  key={k}
+                  style={{
+                    width: cellPx, height: cellPx, borderRadius: "50%", flexShrink: 0,
+                    background: c.filled ? accent : "rgba(255,255,255,0.16)",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                  }}
+                >
+                  {stampImageUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={stampImageUrl}
+                      alt=""
+                      style={{ width: iconPx, height: iconPx, objectFit: "contain", opacity: c.filled ? 1 : 0.35 }}
+                    />
+                  ) : null}
+                </div>
+              ))}
             </div>
           ))}
           {rowCount > 8 ? (
