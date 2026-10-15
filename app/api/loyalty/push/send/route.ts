@@ -36,6 +36,18 @@ export async function POST(req: Request) {
   const logoByProgram = new Map((programs ?? []).map((p) => [p.id, p.logo_url as string | null]));
   let sent = 0;
   const gone: string[] = [];
+  const details: { browser: string; ok: boolean; error?: string }[] = [];
+  const domainOf = (endpoint: string) => {
+    try {
+      const host = new URL(endpoint).hostname;
+      if (host.includes("fcm.googleapis.com") || host.includes("googleapis.com")) return "Chrome/Android (FCM)";
+      if (host.includes("mozilla.com")) return "Firefox";
+      if (host.includes("apple.com")) return "Safari/Apple";
+      return host;
+    } catch {
+      return "?";
+    }
+  };
   await Promise.all(
     subs.map(async (s) => {
       try {
@@ -48,16 +60,22 @@ export async function POST(req: Request) {
           `${origin}/badge.png`
         );
         sent += 1;
+        details.push({ browser: domainOf(s.endpoint), ok: true });
       } catch (e: unknown) {
-        // 410 Gone = suscripción vencida → limpiar
-        if (e instanceof Error && (e as { statusCode?: number }).statusCode === 410) gone.push(s.endpoint);
+        // 410 Gone = suscripción vencida → limpiar. El resto se reporta
+        // (ej. 401 = claves VAPID rotadas) y queda en los logs de Vercel.
+        const status = (e as { statusCode?: number }).statusCode;
+        const msg = e instanceof Error ? e.message : "Error de envío.";
+        console.error(`[push] fallo envío a ${domainOf(s.endpoint)}: status=${status} ${msg}`);
+        if (status === 410) gone.push(s.endpoint);
+        details.push({ browser: domainOf(s.endpoint), ok: false, error: `push service ${status ?? "?"}: ${msg.slice(0, 120)}` });
       }
     })
   );
   if (gone.length > 0) {
     await admin.from("push_subscriptions").delete().in("endpoint", gone);
   }
-  return NextResponse.json({ ok: true, sent, total: subs.length });
+  return NextResponse.json({ ok: true, sent, total: subs.length, details });
 }
 
 async function tokenOf(cardId: string) {
