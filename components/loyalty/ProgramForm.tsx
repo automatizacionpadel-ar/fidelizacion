@@ -14,6 +14,7 @@ export type ProgramDraft = {
   id?: string;
   name: string;
   card_title: string;
+  branch_id: string | null;
   card_type: "stamps" | "points";
   goal: number;
   earn_unit: "visit" | "amount_spent";
@@ -40,6 +41,7 @@ export type ProgramDraft = {
 const defaults: ProgramDraft = {
   name: "",
   card_title: "",
+  branch_id: null,
   card_type: "stamps",
   goal: 10,
   earn_unit: "visit",
@@ -70,10 +72,12 @@ export function ProgramForm({
   initial,
   isActive,
   businessName,
+  branches,
 }: {
   initial?: Partial<ProgramDraft>;
   isActive?: boolean;
   businessName?: string;
+  branches?: { id: string; name: string }[];
 }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
@@ -176,6 +180,12 @@ export function ProgramForm({
     setSaving(true);
     setError(null);
     setOk(null);
+    if (branches && branches.length > 0 && !d.branch_id) {
+      setError("Elegí la sucursal de esta tarjeta en el paso 2 (Reglas).");
+      setSaving(false);
+      setStep(2);
+      return;
+    }
     try {
       const payload = { ...d, points_per_amount: d.points_per_amount, amount_step: d.amount_step, reward_value: d.reward_value };
       let id = d.id;
@@ -252,6 +262,25 @@ export function ProgramForm({
 
         {step === 2 && (
           <div className="flex flex-col gap-4" style={{ marginTop: 16 }}>
+            <div>
+              <Label>Sucursal (esta tarjeta solo vale acá)</Label>
+              {branches && branches.length > 0 ? (
+                <select
+                  value={d.branch_id ?? ""}
+                  onChange={(e) => set("branch_id", e.target.value || null)}
+                  style={selectStyle}
+                >
+                  <option value="">Elegí una sucursal…</option>
+                  {branches.map((b) => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <p style={{ fontSize: 13, color: "#9A9A96", marginTop: 6 }}>
+                  Primero creá una sucursal en <strong>Panel → Sucursales</strong> (aunque tengas un solo local).
+                </p>
+              )}
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <div><Label>Nombre interno</Label><Input value={d.name} onChange={(e) => set("name", e.target.value)} placeholder="Ej. Tarjeta café 2026" /></div>
               <div><Label>Título visible en la tarjeta</Label><Input value={d.card_title} onChange={(e) => set("card_title", e.target.value)} placeholder="Ej. Café de barrio ☕" /></div>

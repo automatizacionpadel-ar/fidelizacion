@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
@@ -11,9 +11,11 @@ type FoundCard = {
   rewards_available: number;
   token?: string;
   program_id: string;
-  loyalty_programs: { card_title: string; card_type: string; goal: number; status: string; earn_unit: string };
+  loyalty_programs: { card_title: string; card_type: string; goal: number; status: string; earn_unit: string; branch_id: string | null; branches: { name: string } | null };
   loyalty_members: { name: string; phone: string };
 };
+
+const BRANCH_KEY = "scanner-branch";
 
 export function Scanner() {
   const [scanning, setScanning] = useState(false);
@@ -26,7 +28,36 @@ export function Scanner() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
+  const [branchId, setBranchId] = useState<string>("");
   const scannerRef = useRef<{ stop: () => Promise<void> } | null>(null);
+
+  useEffect(() => {
+    try {
+      setBranchId(window.localStorage.getItem(BRANCH_KEY) ?? "");
+    } catch {}
+    fetch("/api/loyalty/branches")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((j) => j && setBranches(j.branches ?? []))
+      .catch(() => {});
+  }, []);
+
+  function pickBranch(id: string) {
+    setBranchId(id);
+    try {
+      window.localStorage.setItem(BRANCH_KEY, id);
+    } catch {}
+  }
+
+  // Las tarjetas valen solo en su sucursal. Legacy sin sucursal vale en todas.
+  function branchBlocker(card: FoundCard): string | null {
+    const cardBranch = card.loyalty_programs.branch_id;
+    if (cardBranch && cardBranch !== branchId) {
+      const name = card.loyalty_programs.branches?.name ?? "otra sucursal";
+      return `Esta tarjeta es de ${name}. Cambiá a esa sucursal para operar.`;
+    }
+    return null;
+  }
 
   async function startCamera() {
     setError(null);
@@ -100,6 +131,11 @@ export function Scanner() {
 
   async function earn() {
     if (!selected) return;
+    const blocked = branchBlocker(selected);
+    if (blocked) {
+      setError(blocked);
+      return;
+    }
     setBusy(true);
     setError(null);
     setMsg(null);
@@ -127,6 +163,11 @@ export function Scanner() {
 
   async function redeem() {
     if (!selected) return;
+    const blocked = branchBlocker(selected);
+    if (blocked) {
+      setError(blocked);
+      return;
+    }
     if (!confirm("¿Canjear 1 premio de este cliente?")) return;
     setBusy(true);
     setError(null);
@@ -168,6 +209,25 @@ export function Scanner() {
   return (
     <div className="flex flex-col gap-4">
       <Card>
+        <p style={{ fontSize: 13, fontWeight: 700, color: "#9A9A96" }}>Sucursal activa (este mostrador)</p>
+        {branches.length > 0 ? (
+          <select
+            value={branchId}
+            onChange={(e) => pickBranch(e.target.value)}
+            style={{ width: "100%", background: "#20201F", color: "#F0F0EE", border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 15, marginTop: 6 }}
+          >
+            <option value="">Elegí la sucursal…</option>
+            {branches.map((b) => (
+              <option key={b.id} value={b.id}>{b.name}</option>
+            ))}
+          </select>
+        ) : (
+          <p style={{ fontSize: 13, color: "#9A9A96", marginTop: 6 }}>
+            Sin sucursales: crealas en <strong>Panel → Sucursales</strong>.
+          </p>
+        )}
+      </Card>
+      <Card>
         {!scanning ? (
           <Button onClick={startCamera} style={{ width: "100%", padding: 14, fontSize: 16 }}>📷 Abrir cámara</Button>
         ) : (
@@ -200,6 +260,7 @@ export function Scanner() {
                 }}
               >
                 {c.loyalty_programs.card_title}
+                {c.loyalty_programs.branches?.name ? ` · ${c.loyalty_programs.branches.name}` : ""}
               </button>
             ))}
           </div>
@@ -211,6 +272,7 @@ export function Scanner() {
           <h2 style={{ fontSize: 20, fontWeight: 800 }}>{selected.loyalty_members.name}</h2>
           <p style={{ color: "#9A9A96", fontSize: 14 }}>
             {selected.loyalty_programs.card_title} · {selected.balance} de {selected.loyalty_programs.goal} · 🏆 {selected.rewards_available} premio(s)
+            {selected.loyalty_programs.branches?.name ? ` · 📍 ${selected.loyalty_programs.branches.name}` : ""}
           </p>
           {selected.loyalty_programs.earn_unit === "amount_spent" && (
             <div style={{ marginTop: 12 }}>

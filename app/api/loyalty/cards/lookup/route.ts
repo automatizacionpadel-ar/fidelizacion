@@ -12,7 +12,7 @@ export async function GET(req: Request) {
   if (token) {
     const { data } = await supabase
       .from("loyalty_cards")
-      .select("id,balance,rewards_available,program_id,loyalty_programs!inner(card_title,card_type,goal,status,earn_unit),loyalty_members!inner(name,phone)")
+      .select("id,balance,rewards_available,program_id,loyalty_programs!inner(card_title,card_type,goal,status,earn_unit,branch_id,branches(name)),loyalty_members!inner(name,phone)")
       .eq("token", token)
       .eq("business_id", business.id)
       .maybeSingle();
@@ -24,7 +24,7 @@ export async function GET(req: Request) {
     const phone = normalizePhoneAR(phoneRaw);
     const { data } = await supabase
       .from("loyalty_cards")
-      .select("id,balance,rewards_available,program_id,loyalty_programs!inner(card_title,card_type,goal,status,earn_unit),loyalty_members!inner(name,phone)")
+      .select("id,balance,rewards_available,program_id,loyalty_programs!inner(card_title,card_type,goal,status,earn_unit,branch_id,branches(name)),loyalty_members!inner(name,phone)")
       .eq("business_id", business.id)
       .eq("loyalty_members.phone", phone);
     return NextResponse.json({ cards: data ?? [] });

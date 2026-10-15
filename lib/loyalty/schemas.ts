@@ -3,6 +3,7 @@ import { z } from "zod";
 export const programSchema = z.object({
   name: z.string().min(2).max(80),
   card_title: z.string().min(2).max(80),
+  branch_id: z.string().uuid().nullable().optional(),
   card_type: z.enum(["stamps", "points"]),
   goal: z.number().int().min(2).max(10000),
   earn_unit: z.enum(["visit", "amount_spent"]),

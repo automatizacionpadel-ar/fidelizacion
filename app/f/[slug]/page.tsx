@@ -9,10 +9,11 @@ export default async function EnrollPage({ params }: { params: Promise<{ slug: s
   const admin = createAdminClient();
   const { data: program } = await admin
     .from("loyalty_programs")
-    .select("id,slug,card_title,card_type,goal,reward_description,terms,logo_url,background_color,text_color,accent_color,status,business_id")
+    .select("id,slug,card_title,card_type,goal,reward_description,terms,logo_url,background_color,text_color,accent_color,status,business_id,branch_id,branches(name)")
     .eq("slug", slug)
     .maybeSingle();
   if (!program || program.status !== "active") notFound();
+  const branch = program.branches as unknown as { name: string } | null;
 
   return (
     <div style={{ background: program.background_color ?? "#20201F", minHeight: "100dvh", color: program.text_color ?? "#F0F0EE" }}>
@@ -24,6 +25,9 @@ export default async function EnrollPage({ params }: { params: Promise<{ slug: s
             <img src={program.logo_url} alt="logo" style={{ width: "80%", aspectRatio: "16/9", borderRadius: 18, objectFit: "contain", display: "block", margin: "0 auto" }} />
           ) : null}
           <h1 style={{ fontSize: 24, fontWeight: 800, margin: "12px 0 0", lineHeight: 1.2, textAlign: "center" }}>{program.card_title}</h1>
+          {branch?.name ? (
+            <p style={{ fontSize: 13, opacity: 0.75, margin: "6px 0 0", textAlign: "center" }}>📍 Válida solo en {branch.name}</p>
+          ) : null}
         </div>
         <div style={{ marginTop: 16, border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: 14, fontSize: 14 }}>
           🎁 Premio: <strong>{program.reward_description}</strong> · Meta: {program.goal} {program.card_type === "stamps" ? "sellos" : "puntos"}

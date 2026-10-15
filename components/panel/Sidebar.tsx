@@ -11,12 +11,14 @@ import {
   DashboardIcon,
   LogoutIcon,
   ScanIcon,
+  StoreIcon,
   UsersIcon,
 } from "./icons";
 
 const LINKS = [
   { href: "/panel", label: "Dashboard", icon: DashboardIcon, exact: true },
   { href: "/panel/tarjetas", label: "Tarjetas", icon: CardIcon, exact: false },
+  { href: "/panel/sucursales", label: "Sucursales", icon: StoreIcon, exact: false },
   { href: "/panel/escanear", label: "Escanear", icon: ScanIcon, exact: false },
   { href: "/panel/clientes", label: "Clientes", icon: UsersIcon, exact: false },
   { href: "/panel/avisos", label: "Notificaciones", icon: BellIcon, exact: false },

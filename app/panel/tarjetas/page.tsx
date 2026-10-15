@@ -25,7 +25,7 @@ export default async function TarjetasPage() {
 
   const { data: programs } = await supabase
     .from("loyalty_programs")
-    .select("id,name,card_title,card_type,status,goal")
+    .select("id,name,card_title,card_type,status,goal,branches(name)")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
 
@@ -64,6 +64,9 @@ export default async function TarjetasPage() {
               </div>
               <p style={{ color: "#9A9A96", fontSize: 13, marginTop: 4 }}>
                 {p.card_type === "stamps" ? "Sellos" : "Puntos"} · Meta: {p.goal} · {p.name}
+                {(p.branches as unknown as { name: string } | null)?.name
+                  ? ` · 📍 ${(p.branches as unknown as { name: string }).name}`
+                  : ""}
               </p>
               <div className="flex gap-2 flex-wrap" style={{ marginTop: 12 }}>
                 <Link href={`/panel/programas/${p.id}`}><Button variant="secondary">Editar</Button></Link>
