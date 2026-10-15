@@ -50,6 +50,7 @@ export function QrPoster({
   const [showLogo, setShowLogo] = useState(true);
   const previewRef = useRef<HTMLDivElement>(null);
   const [previewW, setPreviewW] = useState(0);
+  const [printBlocked, setPrintBlocked] = useState(false);
 
   useEffect(() => {
     const el = previewRef.current;
@@ -94,9 +95,10 @@ export function QrPoster({
 
   function print() {
     if (!html) return;
+    setPrintBlocked(false);
     const w = window.open("", "_blank", "width=900,height=1200");
     if (!w) {
-      alert("Permitile al navegador abrir la ventana para imprimir.");
+      setPrintBlocked(true);
       return;
     }
     w.document.write(html);
@@ -248,6 +250,11 @@ export function QrPoster({
 
       <div style={{ marginTop: 14 }}>
         <Button disabled={!html} onClick={print}>Imprimir / Guardar PDF ({size})</Button>
+        {printBlocked && (
+          <p style={{ color: "#f87171", fontSize: 13, marginTop: 8 }}>
+            El navegador bloqueó la ventana: permití las ventanas emergentes para este sitio e intentá de nuevo.
+          </p>
+        )}
         <p style={{ color: "#5C5C59", fontSize: 12, marginTop: 8 }}>
           En el diálogo de impresión elegí el mismo tamaño de papel ({size}) y desactivá los
           encabezados y pies de página del navegador para que salga en 1 hoja.

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
+import { ConfirmModal } from "@/components/ui/ConfirmModal";
 
 type FoundCard = {
   id: string;
@@ -28,6 +29,7 @@ export function Scanner() {
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [confirmRedeem, setConfirmRedeem] = useState(false);
   const [branches, setBranches] = useState<{ id: string; name: string }[]>([]);
   const [branchId, setBranchId] = useState<string>("");
   const scannerRef = useRef<{ stop: () => Promise<void> } | null>(null);
@@ -168,7 +170,6 @@ export function Scanner() {
       setError(blocked);
       return;
     }
-    if (!confirm("¿Canjear 1 premio de este cliente?")) return;
     setBusy(true);
     setError(null);
     setMsg(null);
@@ -186,6 +187,7 @@ export function Scanner() {
       setError(e instanceof Error ? e.message : "No se pudo canjear.");
     } finally {
       setBusy(false);
+      setConfirmRedeem(false);
     }
   }
 
@@ -284,11 +286,20 @@ export function Scanner() {
               {selected.loyalty_programs.card_type === "stamps" ? "Sumar sello" : "Sumar puntos"}
             </Button>
             {selected.rewards_available > 0 && (
-              <Button onClick={redeem} disabled={busy} variant="secondary" style={{ flex: 1, padding: 14, fontSize: 17 }}>
+              <Button onClick={() => setConfirmRedeem(true)} disabled={busy} variant="secondary" style={{ flex: 1, padding: 14, fontSize: 17 }}>
                 Canjear premio
               </Button>
             )}
           </div>
+          <ConfirmModal
+            open={confirmRedeem}
+            title="Canjear premio"
+            body={<>¿Canjear 1 premio de <strong style={{ color: "#F0F0EE" }}>{selected.loyalty_members.name}</strong> ({selected.loyalty_programs.card_title})?</>}
+            confirmLabel="Sí, canjear"
+            busy={busy}
+            onConfirm={redeem}
+            onCancel={() => !busy && setConfirmRedeem(false)}
+          />
           <div style={{ marginTop: 8 }}>
             <Button onClick={resync} disabled={busy} variant="secondary" style={{ width: "100%" }}>
               Sincronizar Wallet

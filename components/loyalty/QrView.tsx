@@ -28,6 +28,7 @@ export function QrView({
 }) {
   const [png, setPng] = useState<string>("");
   const [svg, setSvg] = useState<string>("");
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     QRCode.toString(url, { type: "svg", margin: 2 }).then(setSvg).catch(() => {});
@@ -42,7 +43,8 @@ export function QrView({
 
   function copy() {
     navigator.clipboard.writeText(url).catch(() => {});
-    alert("Enlace copiado ✅");
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   }
 
   return (
@@ -60,7 +62,7 @@ export function QrView({
           <div className="flex gap-2 flex-wrap" style={{ marginTop: 14 }}>
             <Button disabled={!png} onClick={() => download(png, "qr-tarjeta.png")}>Descargar PNG</Button>
             <Button disabled={!svg} variant="secondary" onClick={() => download(`data:image/svg+xml,${encodeURIComponent(svg)}`, "qr-tarjeta.svg")}>Descargar SVG</Button>
-            <Button variant="secondary" onClick={copy}>Copiar enlace</Button>
+            <Button variant="secondary" onClick={copy}>{copied ? "Copiado ✅" : "Copiar enlace"}</Button>
           </div>
           <p style={{ color: "#5C5C59", fontSize: 12, marginTop: 8 }}>
             El PNG y el SVG son el código pelado (ideal para imprenta).
