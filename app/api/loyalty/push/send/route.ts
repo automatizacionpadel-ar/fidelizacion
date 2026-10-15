@@ -26,14 +26,22 @@ export async function POST(req: Request) {
   }
 
   const origin = new URL(req.url).origin;
-  // Icono del programa (logo subido por el negocio) para que el aviso
-  // muestre la marca en vez del logo del navegador.
+  // Icono grande: logo del negocio. Insignia chica: silueta del sello del
+  // programa (endpoint dinámico) o la campanita genérica si no hay sello.
   const programIds = [...new Set(subs.map((s) => s.program_id).filter(Boolean))];
   const { data: programs } = await admin
     .from("loyalty_programs")
-    .select("id,logo_url")
+    .select("id,logo_url,stamp_image_url,updated_at")
     .in("id", programIds.length > 0 ? programIds : ["00000000-0000-0000-0000-000000000000"]);
   const logoByProgram = new Map((programs ?? []).map((p) => [p.id, p.logo_url as string | null]));
+  const badgeByProgram = new Map(
+    (programs ?? []).map((p) => [
+      p.id as string,
+      (p.stamp_image_url as string | null)
+        ? `${origin}/api/loyalty/badge?program_id=${p.id}&v=${new Date(p.updated_at as string).getTime()}`
+        : `${origin}/badge.png`,
+    ])
+  );
   let sent = 0;
   const gone: string[] = [];
   const details: { browser: string; ok: boolean; error?: string }[] = [];
@@ -57,7 +65,7 @@ export async function POST(req: Request) {
           body,
           `${origin}/t/${await tokenOf(s.card_id)}`,
           logoByProgram.get(s.program_id) ?? null,
-          `${origin}/badge.png`
+          badgeByProgram.get(s.program_id) ?? `${origin}/badge.png`
         );
         sent += 1;
         details.push({ browser: domainOf(s.endpoint), ok: true });
