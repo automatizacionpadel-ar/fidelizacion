@@ -31,6 +31,7 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
 
   const m = card.loyalty_members as unknown as { name: string; phone: string; email: string | null };
   const p = card.loyalty_programs as unknown as { card_title: string; goal: number };
+  const cardUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/t/${card.token}`;
 
   async function deleteMember() {
     "use server";
@@ -48,6 +49,15 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
         <p style={{ color: "#9A9A96", fontSize: 14 }}>{m.phone}{m.email ? ` · ${m.email}` : ""}</p>
         <Card style={{ marginTop: 12 }}>
           <p><strong>{p.card_title}</strong> · {card.balance} de {p.goal} · 🏆 {card.rewards_available} premio(s)</p>
+          <p style={{ marginTop: 10, fontSize: 14 }}>
+            🔗 Tarjeta web del cliente:{" "}
+            <a href={cardUrl} target="_blank" rel="noopener noreferrer" style={{ color: "#7AB619", fontWeight: 700 }}>
+              Abrir tarjeta
+            </a>
+          </p>
+          <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 4 }}>
+            Mandale ese link al celu del cliente (ej. por WhatsApp). Al abrirla se actualiza la app y los avisos.
+          </p>
         </Card>
         <h2 style={{ fontWeight: 800, marginTop: 20, marginBottom: 8 }}>Historial</h2>
         <Table
