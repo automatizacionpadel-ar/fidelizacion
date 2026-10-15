@@ -78,7 +78,7 @@ export function ConfirmModal({
               placeholder={requireText}
               style={{
                 width: "100%", background: "#20201F", color: "#F0F0EE",
-                border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 15,
+                border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 16,
               }}
             />
           </div>

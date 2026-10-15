@@ -45,7 +45,8 @@ export function QrWithLogo({
       <div
         style={{
           width: size,
-          height: size,
+          maxWidth: "100%",
+          aspectRatio: "1/1",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -57,5 +58,5 @@ export function QrWithLogo({
     );
   }
   // eslint-disable-next-line @next/next/no-img-element
-  return <img src={src} alt="QR de tu tarjeta" style={{ width: size, height: size, display: "block" }} />;
+  return <img src={src} alt="QR de tu tarjeta" style={{ width: size, maxWidth: "100%", height: "auto", aspectRatio: "1/1", display: "block" }} />;
 }

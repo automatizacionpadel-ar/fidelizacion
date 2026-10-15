@@ -24,8 +24,10 @@ export function Button({
       style={{
         borderRadius: 10,
         padding: "10px 16px",
+        // Objetivo táctil mínimo 44px + 16px evita zoom de iOS.
+        minHeight: 44,
         fontWeight: 600,
-        fontSize: 15,
+        fontSize: 16,
         cursor: props.disabled ? "not-allowed" : "pointer",
         opacity: props.disabled ? 0.6 : 1,
         ...variants[variant],

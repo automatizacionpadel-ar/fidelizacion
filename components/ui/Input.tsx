@@ -6,12 +6,14 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
       {...props}
       style={{
         width: "100%",
+        minWidth: 0,
         background: "#20201F",
         color: "#F0F0EE",
         border: "1px solid #3D3D3B",
         borderRadius: 10,
         padding: "10px 12px",
-        fontSize: 15,
+        // 16px: evita el zoom automático de iOS al enfocar.
+        fontSize: 16,
         outline: "none",
         ...props.style,
       }}

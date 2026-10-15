@@ -172,8 +172,7 @@ export function BillingPanel() {
               >
                 <div className="flex items-center justify-between flex-wrap gap-2">
                   <div>
-                    <strong style={{ fontSize: 15 }}>{periodLabel(p.period)}</strong>
-                    <p style={{ fontSize: 14, color: "#9A9A96" }}>{formatMoney(Number(p.amount))}</p>
+                    <strong style={{ fontSize: 15 }}>{periodLabel(p.period)}</strong>                    <p style={{ fontSize: 14, color: "#9A9A96" }}>{formatMoney(Number(p.amount))}</p>
                   </div>
                   {payingId !== p.id && (
                     <Button variant="secondary" onClick={() => { setPayingId(p.id); setFormError(null); }}>
@@ -188,7 +187,7 @@ export function BillingPanel() {
                       <select
                         value={method}
                         onChange={(e) => setMethod(e.target.value)}
-                        style={{ width: "100%", background: "#20201F", color: "#F0F0EE", border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 15 }}
+                        style={{ width: "100%", background: "#20201F", color: "#F0F0EE", border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 16 }}
                       >
                         {PAYMENT_METHODS.map((m) => (
                           <option key={m.value} value={m.value}>{m.label}</option>
