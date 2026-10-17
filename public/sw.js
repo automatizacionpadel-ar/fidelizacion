@@ -1,6 +1,17 @@
 // Service worker de push: muestra la notificación y abre la tarjeta al tocarla.
+
+// Sin este listener, Chrome no considera la web instalable como PWA (WebAPK).
+// No interceptamos nada: el navegador hace el fetch normal. Solo está para
+// habilitar la instalación, que es lo que vuelve confiable el push en Android.
+self.addEventListener("fetch", () => {});
+
 self.addEventListener("push", (event) => {
-  const data = event.data ? event.data.json() : {};
+  let data = {};
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = {};
+  }
   const title = data.title || "Fidelización";
   const options = {
     body: data.body || "",

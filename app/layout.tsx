@@ -1,5 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Poppins, Montserrat, Playfair_Display } from "next/font/google";
+import { PwaSetup } from "@/components/PwaSetup";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -13,10 +14,11 @@ export const metadata: Metadata = {
     "Creá tu tarjeta de sellos o puntos, compartila con QR y sumá clientes fieles.",
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: "#20201F",
 };
 
 export default function RootLayout({
@@ -33,6 +35,7 @@ export default function RootLayout({
         className="min-h-full flex flex-col"
         style={{ background: "#20201F", color: "#F0F0EE" }}
       >
+        <PwaSetup />
         {children}
       </body>
     </html>
