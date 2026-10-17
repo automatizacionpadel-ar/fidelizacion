@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { enrollUrl, requestBaseUrl } from "@/lib/loyalty/business";
+import { autoScanUrl, requestBaseUrl } from "@/lib/loyalty/business";
 import { QrView } from "@/components/loyalty/QrView";
 
 export const dynamic = "force-dynamic";
@@ -19,7 +19,7 @@ export default async function QrPage({ params }: { params: Promise<{ id: string 
     <div>
       <h1 style={{ fontSize: 24, fontWeight: 800, marginBottom: 20 }}>QR de {program.card_title}</h1>
       <QrView
-        url={enrollUrl(program.slug, base)}
+        url={autoScanUrl(program.slug, base)}
         title={program.card_title}
         logoUrl={program.logo_url}
         businessName={business.name ?? ""}

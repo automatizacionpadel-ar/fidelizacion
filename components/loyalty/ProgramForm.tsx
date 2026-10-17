@@ -61,7 +61,7 @@ const defaults: ProgramDraft = {
   stamp_image_url: null,
   font_family: "system",
   template: "moderno",
-  stamp_cooldown_minutes: 5,
+  stamp_cooldown_minutes: 60,
   status: "draft",
 };
 

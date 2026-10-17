@@ -43,6 +43,11 @@ export function enrollUrl(slug: string, base?: string) {
   return `${base ?? appUrl()}/f/${slug}`;
 }
 
+// Misma URL para QR impreso y tag NFC: resuelve alta o sellado automático.
+export function autoScanUrl(slug: string, base?: string) {
+  return `${base ?? appUrl()}/n/${slug}`;
+}
+
 export function cardUrl(token: string, base?: string) {
   return `${base ?? appUrl()}/t/${token}`;
 }

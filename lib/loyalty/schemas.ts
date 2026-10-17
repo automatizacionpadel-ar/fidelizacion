@@ -23,7 +23,7 @@ export const programSchema = z.object({
   stamp_image_url: z.string().url().nullable().optional(),
   font_family: z.enum(["system", "inter", "poppins", "montserrat", "playfair"]).default("system"),
   template: z.enum(["moderno", "clasico", "glass", "futurista"]).default("moderno"),
-  stamp_cooldown_minutes: z.number().int().min(0).max(1440).default(5),
+  stamp_cooldown_minutes: z.number().int().min(0).max(1440).default(60),
   status: z.enum(["draft", "active", "paused"]).default("draft"),
   slug: z.string().min(2).max(60).regex(/^[a-z0-9-]+$/).optional(),
 });
@@ -32,7 +32,7 @@ export const earnSchema = z.object({
   card_id: z.string().uuid().optional(),
   token: z.string().min(10).max(128).optional(),
   amount_spent: z.number().positive().nullable().optional(),
-  source: z.enum(["scan", "phone_lookup", "manual"]).default("scan"),
+  source: z.enum(["scan", "phone_lookup", "manual", "auto_scan"]).default("scan"),
   note: z.string().max(300).nullable().optional(),
 }).refine((d) => d.card_id || d.token, { message: "Falta card_id o token." });
 

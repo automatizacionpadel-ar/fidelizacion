@@ -6,6 +6,7 @@ import { createSaveLink } from "@/lib/wallet/google";
 import { refreshCardHeroImage } from "@/lib/wallet/cardHero";
 import { cardUrl } from "@/lib/loyalty/business";
 import { notifyN8n } from "@/lib/loyalty/notify";
+import { deviceCookieName, deviceCookieOptions } from "@/lib/loyalty/device";
 import { randomBytes } from "crypto";
 
 // Rate limit simple en memoria (por IP): 20 altas por minuto.
@@ -143,5 +144,8 @@ export async function POST(req: Request) {
 
   notifyN8n("enroll", { business_id: program.business_id, program_id: program.id, card_id: card.id });
   const origin = new URL(req.url).origin;
-  return NextResponse.json({ card_token: card.token, card_url: cardUrl(card.token, origin), wallet_link });
+  const response = NextResponse.json({ card_token: card.token, card_url: cardUrl(card.token, origin), wallet_link });
+  // Identificador de dispositivo: en la próxima visita a /n el sello se suma solo.
+  response.cookies.set(deviceCookieName(program.id), card.token, deviceCookieOptions());
+  return response;
 }
