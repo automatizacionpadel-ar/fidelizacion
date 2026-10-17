@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Card } from "@/components/ui/Card";
 import { Table } from "@/components/ui/Table";
 import { AdjustForm } from "@/components/loyalty/AdjustForm";
+import { ResyncButton } from "@/components/loyalty/ResyncButton";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,10 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
           </p>
           <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 4 }}>
             Mandale ese link al celu del cliente (ej. por WhatsApp). Al abrirla se actualiza la app y los avisos.
+          </p>
+          <ResyncButton cardId={id} />
+          <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>
+            Fuerza la actualización del pase en Google Wallet (progreso y premios).
           </p>
         </Card>
         <h2 style={{ fontWeight: 800, marginTop: 20, marginBottom: 8 }}>Historial</h2>

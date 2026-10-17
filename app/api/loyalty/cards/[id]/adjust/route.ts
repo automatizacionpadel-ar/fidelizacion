@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { getMyBusiness } from "@/lib/loyalty/business";
 import { adjustSchema } from "@/lib/loyalty/schemas";
 import { notifyN8n } from "@/lib/loyalty/notify";
+import { syncCardWallet } from "@/lib/wallet/syncCard";
 
 export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -27,5 +28,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     type: "adjust", amount: parsed.data.amount, created_by: user.id, source: "manual", note: parsed.data.note,
   });
   notifyN8n("adjust", { business_id: business.id, card_id: id, amount: parsed.data.amount });
+  // Sync Wallet diferido (regenera la hero con el nuevo balance + PATCH del
+  // objeto). Va con after() para no demorar la respuesta; si falla, la tarjeta
+  // queda pending_sync=true.
+  after(() => syncCardWallet(id));
   return NextResponse.json({ ok: true, balance: newBalance });
 }
