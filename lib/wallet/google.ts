@@ -235,3 +235,52 @@ export async function updateObject(card: CardLike) {
   );
   if (!res.ok) throw new Error(`Wallet PATCH falló: ${(await res.text()).slice(0, 200)}`);
 }
+
+export type CardMessage = {
+  id: string;
+  header: string;
+  body: string;
+};
+
+// Notificación nativa de Google Wallet: agrega un mensaje TEXT_AND_NOTIFY al
+// pase. Lo entrega la app de Wallet (de sistema), no el navegador, así que
+// llega con Chrome cerrado y sin instalar nada. Límites de Google: máx. 3
+// notificaciones por pase cada 24 h (excederlo da QuotaExceededException) y el
+// cliente debe tener las notificaciones de Wallet activadas. Si todavía no
+// guardó el pase, el objeto no existe y la API responde 404.
+export async function sendCardMessage(cardId: string, message: CardMessage) {
+  const token = await accessToken();
+  const now = new Date();
+  const end = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+  const res = await fetch(
+    `https://walletobjects.googleapis.com/walletobjects/v1/loyaltyObject/${objectId(cardId)}/addMessage`,
+    {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "content-type": "application/json" },
+      body: JSON.stringify({
+        message: {
+          id: message.id,
+          header: message.header,
+          body: message.body,
+          messageType: "TEXT_AND_NOTIFY",
+          // Se oculta solo del detalle a los 7 días para no acumular mensajes
+          // (Google permite hasta 10 por pase).
+          displayInterval: {
+            start: { date: now.toISOString() },
+            end: { date: end.toISOString() },
+          },
+        },
+      }),
+    }
+  );
+  if (!res.ok) {
+    const text = (await res.text()).slice(0, 300);
+    const err = new Error(`Wallet addmessage falló (${res.status}): ${text}`) as Error & {
+      status?: number;
+      quota?: boolean;
+    };
+    err.status = res.status;
+    err.quota = res.status === 429 || /quota/i.test(text);
+    throw err;
+  }
+}

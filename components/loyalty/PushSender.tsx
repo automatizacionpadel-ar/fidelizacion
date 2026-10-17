@@ -1,16 +1,25 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Input, Label } from "@/components/ui/Input";
 
 type Program = { id: string; card_title: string };
+type Channel = "wallet" | "push" | "both";
+
+type SendResult = {
+  wallet: { sent: number; total: number; notSaved: number; quota: number; failed: number } | null;
+  push: { sent: number; total: number } | null;
+};
 
 export function PushSender({ programs }: { programs: Program[] }) {
+  const router = useRouter();
   const [programId, setProgramId] = useState(programs[0]?.id ?? "");
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
+  const [channel, setChannel] = useState<Channel>("wallet");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -50,14 +59,24 @@ export function PushSender({ programs }: { programs: Program[] }) {
       const res = await fetch("/api/loyalty/push/send", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ program_id: programId, title, body }),
+        body: JSON.stringify({ program_id: programId, title, body, channel }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "No se pudo enviar.");
-      setMsg(`Enviado a ${json.sent} de ${json.total} suscriptos ✅`);
-      setDetails(json.details ?? null);
+      const r = json as SendResult;
+      const parts: string[] = [];
+      if (r.wallet) {
+        parts.push(`Google Wallet: ${r.wallet.sent} avisos entregados`);
+        if (r.wallet.notSaved > 0) parts.push(`${r.wallet.notSaved} sin la tarjeta en Wallet`);
+        if (r.wallet.quota > 0) parts.push(`${r.wallet.quota} alcanzaron el límite de 3/día`);
+        if (r.wallet.failed > 0) parts.push(`${r.wallet.failed} con error`);
+      }
+      if (r.push) parts.push(`Navegador: ${r.push.sent} de ${r.push.total}`);
+      setMsg(parts.join(" · ") + " ✅");
+      setDetails(r.push ? (json.details ?? null) : null);
       setTitle("");
       setBody("");
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al enviar.");
     } finally {
@@ -79,10 +98,22 @@ export function PushSender({ programs }: { programs: Program[] }) {
           <select value={programId} onChange={(e) => setProgramId(e.target.value)} style={selectStyle}>
             {programs.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.card_title}{counts[p.id] !== undefined ? ` (${counts[p.id]} suscriptos)` : ""}
+                {p.card_title}{counts[p.id] !== undefined ? ` (${counts[p.id]} en navegador)` : ""}
               </option>
             ))}
           </select>
+        </div>
+        <div>
+          <Label>Por dónde llega</Label>
+          <select value={channel} onChange={(e) => setChannel(e.target.value as Channel)} style={selectStyle}>
+            <option value="wallet">Google Wallet (recomendado)</option>
+            <option value="push">Navegador (Web Push)</option>
+            <option value="both">Ambos</option>
+          </select>
+          <p style={{ color: "#5C5C59", fontSize: 12, marginTop: 6 }}>
+            Wallet llega aunque Chrome esté cerrado (máx. 3 avisos por tarjeta cada 24 h). Solo a
+            quienes guardaron la tarjeta en Google Wallet.
+          </p>
         </div>
         <div>
           <Label>Título</Label>
@@ -104,9 +135,10 @@ export function PushSender({ programs }: { programs: Program[] }) {
         <Button type="submit" disabled={busy}>{busy ? "Enviando..." : "Enviar aviso"}</Button>
       </form>
       <p style={{ color: "#5C5C59", fontSize: 12, marginTop: 12 }}>
-        Llega a los clientes que tocaron el botón de avisos en su tarjeta. Al tocar el aviso se abre su tarjeta.
+        Al tocar el aviso se abre la tarjeta del cliente. En el navegador solo llega a quienes
+        activaron los avisos; en Google Wallet, a quienes guardaron la tarjeta.
       </p>
-      {diag && (
+      {diag && channel !== "wallet" && (
         <div style={{ border: "1px dashed #3D3D3B", borderRadius: 8, padding: 10, fontSize: 12, color: "#9A9A96", marginTop: 8, lineHeight: 1.7 }}>
           Diagnóstico: claves VAPID {diag.configured ? "✅ cargadas" : "❌ FALTAN en el servidor (agregalas en Vercel → Environment Variables)"}
           <br />
