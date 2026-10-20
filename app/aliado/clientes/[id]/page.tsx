@@ -49,7 +49,7 @@ export default async function AllyClientDetailPage({
           <h2 style={{ fontSize: 16, fontWeight: 800 }}>Resumen comercial</h2>
           <dl style={{ marginTop: 10, fontSize: 14, lineHeight: 1.8 }}>
             <dt style={{ color: "#9A9A96", fontSize: 12 }}>Plan</dt>
-            <dd>{client.plan === "pro" ? "Pro" : "Base"} · {formatMoney(planPrice(client.plan))}/mes</dd>
+            <dd>{client.plan === "pro" ? "Pro" : "Básico"} · {formatMoney(planPrice(client.plan))}/mes</dd>
             <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Alta</dt>
             <dd>{new Date(client.created_at).toLocaleString("es-AR")}</dd>
             <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Estado</dt>

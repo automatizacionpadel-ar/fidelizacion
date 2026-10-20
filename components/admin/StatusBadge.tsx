@@ -14,9 +14,10 @@ export function StatusBadge({ status }: { status: string }) {
 }
 
 export function PlanBadge({ plan }: { plan: string }) {
+  const label = plan === "pro" ? "Pro" : "Básico";
   return (
-    <span style={{ background: "#3D3D3B", color: "#F0F0EE", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "2px 10px", textTransform: "capitalize" }}>
-      {plan}
+    <span style={{ background: "#3D3D3B", color: "#F0F0EE", fontSize: 12, fontWeight: 700, borderRadius: 999, padding: "2px 10px" }}>
+      {label}
     </span>
   );
 }

@@ -7,6 +7,7 @@ import { Table } from "@/components/ui/Table";
 import { Button } from "@/components/ui/Button";
 import { Pagination } from "@/components/admin/Pagination";
 import { PlanBadge, StatusBadge } from "@/components/admin/StatusBadge";
+import { ClientRowActions } from "@/components/admin/ClientRowActions";
 
 export const dynamic = "force-dynamic";
 
@@ -69,7 +70,7 @@ export default async function AdminClientsPage({
             <label htmlFor="plan" style={{ display: "block", fontSize: 12, color: "#9A9A96", marginBottom: 4 }}>Plan</label>
             <select id="plan" name="plan" defaultValue={params.plan ?? ""} style={{ width: "100%", background: "#20201F", color: "#F0F0EE", border: "1px solid #3D3D3B", borderRadius: 10, padding: "9px 12px", fontSize: 14 }}>
               <option value="">Todos</option>
-              <option value="base">Base</option>
+              <option value="base">Básico</option>
               <option value="pro">Pro</option>
             </select>
           </div>
@@ -96,21 +97,18 @@ export default async function AdminClientsPage({
         <>
           <div style={{ marginTop: 16 }}>
             <Table
-              head={["Negocio", "Dueño", "Plan", "Aliado", "Estado", "Alta", ""]}
+              head={["Negocio", "Dueño", "Teléfono", "Plan", "Estado", "Alta", "Aliado", "Acciones"]}
               rows={(result?.rows ?? []).map((c) => [
-                <div key="n">
-                  <Link href={`/admin/clientes/${c.id}`} style={{ color: "#F0F0EE", fontWeight: 700 }}>{c.name}</Link>
-                  <p style={{ color: "#9A9A96", fontSize: 12 }}>/{c.slug}</p>
-                </div>,
-                <div key="o">
-                  <p style={{ fontSize: 13 }}>{c.owner_name ?? "—"}</p>
-                  <p style={{ color: "#9A9A96", fontSize: 12 }}>{c.owner_email ?? "—"}</p>
-                </div>,
+                <Link key="n" href={`/admin/clientes/${c.id}`} style={{ color: "#F0F0EE", fontWeight: 700 }}>{c.name}</Link>,
+                c.owner_name ?? "—",
+                c.owner_phone || "—",
                 <PlanBadge key="p" plan={c.plan} />,
-                c.ally_name ?? <span key="a" style={{ color: "#9A9A96" }}>Sin aliado</span>,
                 <StatusBadge key="s" status={c.status} />,
                 new Date(c.created_at).toLocaleDateString("es-AR"),
-                <Link key="v" href={`/admin/clientes/${c.id}`} style={{ color: "#7AB619", fontWeight: 700 }}>Ver</Link>,
+                <span key="ally" style={{ color: c.ally_id ? "#7AB619" : "#9A9A96", fontWeight: 700 }}>
+                  {c.ally_id ? "Sí" : "No"}
+                </span>,
+                <ClientRowActions key="actions" client={c} allies={allies} />,
               ])}
             />
           </div>

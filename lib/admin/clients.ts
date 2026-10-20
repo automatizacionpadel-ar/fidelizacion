@@ -3,7 +3,7 @@ import type { AdminBusinessDetail, AdminBusinessRow, AdminListResult } from "@/l
 
 export const ADMIN_PAGE_SIZE = 25;
 
-type OwnerInfo = { email: string | null; name: string | null };
+type OwnerInfo = { email: string | null; name: string | null; phone: string | null };
 
 async function ownerInfo(userId: string): Promise<OwnerInfo> {
   try {
@@ -12,9 +12,10 @@ async function ownerInfo(userId: string): Promise<OwnerInfo> {
     return {
       email: data.user?.email ?? null,
       name: (data.user?.user_metadata?.nombre as string | undefined) ?? null,
+      phone: (data.user?.user_metadata?.telefono as string | undefined) ?? null,
     };
   } catch {
-    return { email: null, name: null };
+    return { email: null, name: null, phone: null };
   }
 }
 
@@ -61,6 +62,7 @@ export async function listAdminClients({
     ...(b as AdminBusinessRow),
     owner_email: owners[i].email,
     owner_name: owners[i].name,
+    owner_phone: owners[i].phone,
     ally_name: b.ally_id ? allyNames.get(b.ally_id) ?? null : null,
   }));
 
@@ -102,6 +104,7 @@ export async function getAdminClientDetail(id: string): Promise<AdminBusinessDet
     ally_name: (ally as { name?: string } | null)?.name ?? null,
     owner_email: owner.email,
     owner_name: owner.name,
+    owner_phone: owner.phone,
   };
 }
 

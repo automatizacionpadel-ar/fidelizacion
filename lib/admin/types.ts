@@ -14,6 +14,7 @@ export type AdminBusinessRow = {
   suspended_reason: string;
   owner_email: string | null;
   owner_name: string | null;
+  owner_phone: string | null;
   ally_name: string | null;
 };
 

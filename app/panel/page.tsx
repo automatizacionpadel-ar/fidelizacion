@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { slugify } from "@/lib/auth/helpers";
+import { normalizePlan } from "@/lib/billing";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Stats } from "@/components/loyalty/Stats";
@@ -93,10 +94,13 @@ function CreateBusinessForm({
     const { data: existing } = await supabase.from("businesses").select("slug").eq("slug", slug).maybeSingle();
     if (existing) slug = `${slug}-${user.id.slice(0, 6)}`;
     const referral = await resolveReferralFromMetadata(user.user_metadata);
+    const requestedPlan = user.user_metadata?.plan;
+    const plan = normalizePlan(typeof requestedPlan === "string" ? requestedPlan : null);
     const { error } = await supabase.from("businesses").insert({
       owner_user_id: user.id,
       name,
       slug,
+      plan,
       ...(referral ? { ally_id: referral.id } : {}),
     });
     if (!error) redirect("/panel");

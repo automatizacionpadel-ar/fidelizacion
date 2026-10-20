@@ -1,8 +1,8 @@
 // Facturación de la mensualidad del servicio.
 // Los precios de los planes viven acá: cambialos cuando quieras actualizarlos.
 export const PLANS = {
-  base: { label: "Base", price: 30000 },
-  pro: { label: "Pro", price: 50000 },
+  base: { label: "Básico", price: 30000 },
+  pro: { label: "Pro", price: 55000 },
 } as const;
 
 export type PlanId = keyof typeof PLANS;

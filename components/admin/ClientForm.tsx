@@ -80,7 +80,7 @@ export function ClientCreateForm({
       <div>
         <Label htmlFor="plan">Plan</Label>
         <select id="plan" value={form.plan} onChange={(e) => set("plan", e.target.value)} style={selectStyle}>
-          <option value="base">Base</option>
+          <option value="base">Básico</option>
           <option value="pro">Pro</option>
         </select>
       </div>

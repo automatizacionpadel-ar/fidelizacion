@@ -9,9 +9,11 @@ import type { AdminBusinessRow } from "@/lib/admin/types";
 export function ClientEditForm({
   client,
   allies,
+  onClose,
 }: {
   client: AdminBusinessRow;
   allies: { id: string; name: string; status: string }[];
+  onClose?: () => void;
 }) {
   const router = useRouter();
   const [form, setForm] = useState({
@@ -51,6 +53,7 @@ export function ClientEditForm({
       if (!res.ok) throw new Error(json.error ?? "No se pudo guardar.");
       setOk(true);
       router.refresh();
+      onClose?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "No se pudo guardar.");
     } finally {
@@ -71,7 +74,7 @@ export function ClientEditForm({
       <div>
         <Label htmlFor="edit-plan">Plan</Label>
         <select id="edit-plan" value={form.plan} onChange={(e) => set("plan", e.target.value)} style={selectStyle}>
-          <option value="base">Base</option>
+          <option value="base">Básico</option>
           <option value="pro">Pro</option>
         </select>
       </div>
@@ -88,8 +91,9 @@ export function ClientEditForm({
       </div>
       {error ? <p className="md:col-span-2" style={{ color: "#f87171", fontSize: 14 }}>{error}</p> : null}
       {ok ? <p className="md:col-span-2" style={{ color: "#7AB619", fontSize: 14 }}>Cambios guardados.</p> : null}
-      <div className="md:col-span-2">
+      <div className="md:col-span-2 flex flex-wrap gap-2">
         <Button type="submit" disabled={saving}>{saving ? "Guardando…" : "Guardar cambios"}</Button>
+        {onClose ? <Button type="button" variant="secondary" onClick={onClose}>Cancelar</Button> : null}
       </div>
     </form>
   );

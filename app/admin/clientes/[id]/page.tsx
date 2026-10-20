@@ -67,12 +67,14 @@ export default async function AdminClientDetailPage({
               <dd>{client.owner_name ?? "—"}</dd>
               <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Email</dt>
               <dd>{client.owner_email ?? "—"}</dd>
+              <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Teléfono</dt>
+              <dd>{client.owner_phone ?? "—"}</dd>
               <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Aliado</dt>
               <dd>{client.ally_name ?? "Sin aliado"}</dd>
               <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Alta</dt>
               <dd>{new Date(client.created_at).toLocaleString("es-AR")}</dd>
               <dt style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>Plan</dt>
-              <dd>{client.plan === "pro" ? "Pro" : "Base"} · {formatMoney(planPrice(client.plan))}/mes</dd>
+              <dd>{client.plan === "pro" ? "Pro" : "Básico"} · {formatMoney(planPrice(client.plan))}/mes</dd>
             </dl>
           </Card>
 
