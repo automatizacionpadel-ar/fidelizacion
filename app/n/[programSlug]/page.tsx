@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { after } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EnrollForm } from "@/components/loyalty/EnrollForm";
+import { AccountSuspended } from "@/components/loyalty/AccountSuspended";
 import { VirtualCard } from "@/components/loyalty/VirtualCard";
 import { deviceCookieName } from "@/lib/loyalty/device";
 import { syncCardWallet } from "@/lib/wallet/syncCard";
@@ -30,11 +31,13 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
 
   const { data: program } = await admin
     .from("loyalty_programs")
-    .select("id,slug,business_id,card_title,card_type,goal,reward_description,terms,logo_url,background_color,text_color,accent_color,stamp_icon,stamp_image_url,font_family,template,status,branch_id,branches(name)")
+    .select("id,slug,business_id,card_title,card_type,goal,reward_description,terms,logo_url,background_color,text_color,accent_color,stamp_icon,stamp_image_url,font_family,template,status,branch_id,branches(name),businesses(name,status)")
     .eq("slug", programSlug)
     .maybeSingle();
   if (!program || program.status !== "active") notFound();
   const branch = program.branches as unknown as { name: string } | null;
+  const business = program.businesses as unknown as { name: string; status: string } | null;
+  if (business?.status === "suspended") return <AccountSuspended businessName={business.name} />;
 
   // Cookie de dispositivo → tarjeta válida de ESTE programa.
   const cookieStore = await cookies();
@@ -94,7 +97,6 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
   }
 
   const { data: member } = await admin.from("loyalty_members").select("name").eq("id", card.member_id).single();
-  const { data: business } = await admin.from("businesses").select("name").eq("id", program.business_id).single();
   const unit = program.card_type === "stamps" ? "sello" : "punto";
 
   return (

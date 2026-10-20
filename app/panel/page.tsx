@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Stats } from "@/components/loyalty/Stats";
 import { ActivityStats } from "@/components/loyalty/ActivityStats";
+import { resolveReferralFromMetadata } from "@/lib/auth/referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -32,7 +33,16 @@ export default async function PanelPage() {
   }
 
   if (!business) {
-    return <CreateBusinessForm ownerName={(user.user_metadata?.nombre as string) ?? ""} />;
+    const referral = await resolveReferralFromMetadata(user.user_metadata);
+    const suggestedName =
+      typeof user.user_metadata?.negocio === "string" ? user.user_metadata.negocio : "";
+    return (
+      <CreateBusinessForm
+        ownerName={(user.user_metadata?.nombre as string) ?? ""}
+        suggestedName={suggestedName}
+        referralName={referral?.name ?? null}
+      />
+    );
   }
 
   return (
@@ -60,7 +70,15 @@ function SetupNeeded() {
   );
 }
 
-function CreateBusinessForm({ ownerName }: { ownerName: string }) {
+function CreateBusinessForm({
+  ownerName,
+  suggestedName,
+  referralName,
+}: {
+  ownerName: string;
+  suggestedName: string;
+  referralName: string | null;
+}) {
   async function create(formData: FormData) {
     "use server";
     const supabase = await createClient();
@@ -74,10 +92,12 @@ function CreateBusinessForm({ ownerName }: { ownerName: string }) {
     // Asegurar unicidad básica
     const { data: existing } = await supabase.from("businesses").select("slug").eq("slug", slug).maybeSingle();
     if (existing) slug = `${slug}-${user.id.slice(0, 6)}`;
+    const referral = await resolveReferralFromMetadata(user.user_metadata);
     const { error } = await supabase.from("businesses").insert({
       owner_user_id: user.id,
       name,
       slug,
+      ...(referral ? { ally_id: referral.id } : {}),
     });
     if (!error) redirect("/panel");
   }
@@ -90,10 +110,16 @@ function CreateBusinessForm({ ownerName }: { ownerName: string }) {
       <p style={{ color: "#9A9A96", marginTop: 8, fontSize: 14 }}>
         Contanos el nombre de tu negocio para crear tu espacio.
       </p>
+      {referralName ? (
+        <p style={{ color: "#7AB619", marginTop: 8, fontSize: 13 }}>
+          Tu negocio quedará asociado a {referralName}.
+        </p>
+      ) : null}
       <form action={create} className="flex flex-col gap-3" style={{ marginTop: 16 }}>
         <input
           name="name"
           required
+          defaultValue={suggestedName}
           placeholder="Ej. Café de barrio"
           style={{ background: "#20201F", color: "#F0F0EE", border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 16 }}
         />

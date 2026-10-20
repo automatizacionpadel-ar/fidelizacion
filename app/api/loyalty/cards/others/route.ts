@@ -15,6 +15,13 @@ export async function GET(req: Request) {
     .maybeSingle();
   if (!ref) return NextResponse.json({ cards: [] });
 
+  const { data: business } = await admin
+    .from("businesses")
+    .select("status")
+    .eq("id", ref.business_id)
+    .maybeSingle();
+  if (business?.status === "suspended") return NextResponse.json({ cards: [] });
+
   const [{ data: programs }, { data: mine }] = await Promise.all([
     admin
       .from("loyalty_programs")

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { upsertClass, walletConfigured } from "@/lib/wallet/google";
 import { ensureFlatWalletLogo } from "@/lib/wallet/walletLogo";
 
@@ -7,6 +7,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const { data: program, error } = await supabase
     .from("loyalty_programs")
     .select("*")

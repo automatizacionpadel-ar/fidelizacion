@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 
 const branchSchema = z.object({
   name: z.string().min(2).max(80),
@@ -18,6 +18,8 @@ export async function GET() {
 export async function POST(req: Request) {
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const json = await req.json().catch(() => null);
   const parsed = branchSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });

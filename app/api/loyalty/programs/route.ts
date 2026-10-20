@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
-import { getMyBusiness, enrollUrl } from "@/lib/loyalty/business";
+import { getMyBusiness, enrollUrl, suspendedResponse } from "@/lib/loyalty/business";
 import { programSchema } from "@/lib/loyalty/schemas";
 import { slugify } from "@/lib/auth/helpers";
 
 export async function POST(req: Request) {
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const json = await req.json().catch(() => null);
   const parsed = programSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos.", details: parsed.error.flatten() }, { status: 400 });

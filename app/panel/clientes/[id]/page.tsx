@@ -37,6 +37,13 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
   async function deleteMember() {
     "use server";
     const s = await createClient();
+    const { data: me } = await s.auth.getUser();
+    const { data: biz } = await s
+      .from("businesses")
+      .select("status")
+      .eq("owner_user_id", me.user?.id ?? "")
+      .maybeSingle();
+    if (biz?.status === "suspended") redirect("/panel");
     // Anonimizar/borrar: borramos la tarjeta y sus transacciones, y el miembro si no tiene más tarjetas.
     await s.from("loyalty_transactions").delete().eq("card_id", id);
     await s.from("loyalty_cards").delete().eq("id", id);

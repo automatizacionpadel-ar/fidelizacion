@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
 
 // Modal de confirmación propio (no usar window.alert/confirm en la app).
@@ -29,8 +30,9 @@ export function ConfirmModal({
   const [typed, setTyped] = useState("");
 
   useEffect(() => {
-    if (open) setTyped("");
-  }, [open ]);
+    if (!open) return;
+    queueMicrotask(() => setTyped(""));
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -44,7 +46,7 @@ export function ConfirmModal({
   if (!open) return null;
   const canConfirm = !requireText || typed.trim() === requireText;
 
-  return (
+  return createPortal(
     <div
       onClick={onCancel}
       style={{
@@ -84,10 +86,11 @@ export function ConfirmModal({
           </div>
         )}
         <div className="flex gap-2" style={{ marginTop: 16, justifyContent: "flex-end" }}>
-          <Button variant="secondary" onClick={onCancel} disabled={busy}>
+          <Button type="button" variant="secondary" onClick={onCancel} disabled={busy}>
             Cancelar
           </Button>
           <Button
+            type="button"
             onClick={onConfirm}
             disabled={busy || !canConfirm}
             style={danger ? { background: "#f87171", borderColor: "#f87171", color: "#20201F" } : undefined}
@@ -96,6 +99,7 @@ export function ConfirmModal({
           </Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

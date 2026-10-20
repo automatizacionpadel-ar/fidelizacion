@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 // Compresión server-side con sharp: las imágenes que sube el negocio
@@ -41,6 +41,8 @@ async function optimize(buf: Buffer, kind: "logo" | "stamp" | "hero" | "wallet_l
 export async function POST(req: Request) {
   const { user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const form = await req.formData().catch(() => null);
   const file = form?.get("file") as File | null;
   const rawKind = form?.get("kind");

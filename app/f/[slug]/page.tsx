@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { EnrollForm } from "@/components/loyalty/EnrollForm";
+import { AccountSuspended } from "@/components/loyalty/AccountSuspended";
 
 export const dynamic = "force-dynamic";
 
@@ -9,11 +10,13 @@ export default async function EnrollPage({ params }: { params: Promise<{ slug: s
   const admin = createAdminClient();
   const { data: program } = await admin
     .from("loyalty_programs")
-    .select("id,slug,card_title,card_type,goal,reward_description,terms,logo_url,background_color,text_color,accent_color,status,business_id,branch_id,branches(name)")
+    .select("id,slug,card_title,card_type,goal,reward_description,terms,logo_url,background_color,text_color,accent_color,status,business_id,branch_id,branches(name),businesses(name,status)")
     .eq("slug", slug)
     .maybeSingle();
   if (!program || program.status !== "active") notFound();
   const branch = program.branches as unknown as { name: string } | null;
+  const business = program.businesses as unknown as { name: string; status: string } | null;
+  if (business?.status === "suspended") return <AccountSuspended businessName={business.name} />;
 
   return (
     <div style={{ background: program.background_color ?? "#20201F", minHeight: "100dvh", color: program.text_color ?? "#F0F0EE" }}>

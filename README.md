@@ -6,10 +6,31 @@ Next.js (App Router, TypeScript) + Supabase (Auth, Postgres, Storage). Sistema d
 
 1. `npm install`
 2. Copiá `.env.example` a `.env.local` y cargá las claves de Supabase.
-3. **Migración DB:** en Supabase Dashboard > SQL Editor, ejecutá `supabase/migrations/001_loyalty.sql`.
-   Crea `businesses`, `loyalty_programs`, `loyalty_members`, `loyalty_cards`, `loyalty_transactions` + RLS + RPC `loyalty_earn` / `loyalty_redeem`.
+3. **Migraciones DB:** en Supabase Dashboard > SQL Editor, ejecutá en orden los archivos de
+   `supabase/migrations/` (`001` a `019`). Las migraciones `013`–`019` agregan roles de
+   plataforma, aliados, suspensión, auditoría y KPIs. Los `*_down.sql` existen para rollback.
 4. **Storage:** creá el bucket público `logos` (para logos de tarjetas).
 5. `npm run dev` → http://localhost:3000
+
+## Roles de plataforma, aliados y suspensión
+
+1. Aplicá `013_platform_roles.sql` a `019_suspension_enforcement.sql` (en orden).
+2. Bootstrap del primer super admin: reemplazá el email en
+   `supabase/seed/00_bootstrap_super_admin.sql` y ejecutalo en el SQL Editor.
+   Después del login, `/auth/continue` redirige a `/admin`.
+3. **Super admin** (`/admin`): dashboard de KPIs, alta/edición/suspensión/borrado de clientes,
+   alta/edición/suspensión/borrado de aliados y auditoría (`/admin/auditoria`).
+4. **Aliado** (`/aliado`): portal de solo lectura con métricas agregadas de su cartera.
+   No ve PII de consumidores, tarjetas, transacciones ni suscripciones push.
+   Puede editar sus datos de contacto en `/aliado/perfil`.
+5. **Suspensión de cliente:** el panel queda en modo lectura, se bloquean sellados, canjes,
+   programas, sucursales y avisos; los pagos siguen habilitados en `/panel/pagos`.
+6. El borrado de clientes es definitivo y exige escribir el slug. El de aliados solo se permite
+   si no tiene clientes asignados.
+7. Rollback: ejecutar `019_down` … `013_down` en orden inverso.
+
+Precios de planes, MRR y comisiones se calculan en la app desde `lib/billing.ts`; las RPC de
+KPIs solo devuelven conteos y agregados.
 
 ## Google Wallet (Loyalty)
 
@@ -48,13 +69,18 @@ Tras cada sello/canje se hace PATCH al objeto; si falla, la transacción **no se
 - **Apple Wallet:** requiere cuenta paga Apple Developer, Pass Type ID certificado y web service con APNs.
   Reservar campos `apple_serial` en `loyalty_cards` cuando se implemente.
 - **Cupones:** agregar `coupon` a `card_type` + UI (hoy deshabilitado con "Próximamente").
-- Campañas, geolocalización, Smart Tap/NFC en caja, código de un solo uso, roles múltiples (`business_members`), cobros.
+- Campañas, geolocalización, Smart Tap/NFC en caja, código de un solo uso, roles granulares de
+  staff (`support`, `finance`, `read_only_admin`), 2FA para super admin y liquidación de comisiones.
 - n8n: seteá `N8N_LOYALTY_WEBHOOK_URL` y cada evento `earn/redeem/enroll/adjust` llega como POST.
 
 ## Estructura
 
 - `app/` páginas + `app/api/loyalty/` endpoints
-- `components/ui/` Button, Input, Card, Table
+- `app/admin/`, `app/api/admin/`: panel y API de super admin
+- `app/aliado/`, `app/api/ally/`: portal de aliados
+- `components/ui/` Button, Input, Card, Table, ConfirmModal
 - `components/loyalty/` ProgramForm, CardPreview, QrView, Scanner, Stats, EnrollForm, AdjustForm
-- `lib/supabase/` client, server, admin · `lib/wallet/google.ts` · `lib/loyalty/` schemas, business, notify
-- `supabase/migrations/001_loyalty.sql`
+- `components/admin/`, `components/ally/`: navegación, formularios y KPIs
+- `lib/supabase/` client, server, admin · `lib/auth/roles.ts` · `lib/admin/` · `lib/wallet/google.ts` · `lib/loyalty/`
+- `supabase/migrations/001`–`019` (+ `*_down.sql`) · `supabase/seed/00_bootstrap_super_admin.sql`
+- `proxy.ts` reemplaza a `middleware.ts` (Next.js 16)

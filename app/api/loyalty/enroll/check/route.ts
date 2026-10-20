@@ -33,6 +33,13 @@ export async function GET(req: Request) {
     .maybeSingle();
   if (!program || program.status !== "active") return NextResponse.json({ registered: false });
 
+  const { data: business } = await admin
+    .from("businesses")
+    .select("status")
+    .eq("id", program.business_id)
+    .maybeSingle();
+  if (business?.status === "suspended") return NextResponse.json({ registered: false });
+
   const { data: member } = await admin
     .from("loyalty_members")
     .select("id")

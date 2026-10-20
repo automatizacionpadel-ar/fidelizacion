@@ -17,6 +17,14 @@ export async function POST(req: Request) {
     .maybeSingle();
   if (!card) return NextResponse.json({ error: "Tarjeta no válida." }, { status: 404 });
 
+  const { data: business } = await admin
+    .from("businesses")
+    .select("status")
+    .eq("id", card.business_id)
+    .maybeSingle();
+  if (business?.status === "suspended")
+    return NextResponse.json({ error: "La cuenta del negocio está suspendida." }, { status: 403 });
+
   const { error } = await admin.from("push_subscriptions").upsert(
     {
       business_id: card.business_id,

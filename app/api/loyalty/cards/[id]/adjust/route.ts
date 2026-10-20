@@ -1,5 +1,5 @@
 import { NextResponse, after } from "next/server";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { adjustSchema } from "@/lib/loyalty/schemas";
 import { notifyN8n } from "@/lib/loyalty/notify";
 import { syncCardWallet } from "@/lib/wallet/syncCard";
@@ -8,6 +8,8 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const json = await req.json().catch(() => null);
   const parsed = adjustSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Datos inválidos." }, { status: 400 });

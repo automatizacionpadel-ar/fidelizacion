@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateObject } from "@/lib/wallet/google";
 import { refreshCardHeroImage } from "@/lib/wallet/cardHero";
@@ -12,6 +12,8 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
 
   const { data: card } = await supabase.from("loyalty_cards").select("*").eq("id", id).maybeSingle();
   if (!card || card.business_id !== business.id) {

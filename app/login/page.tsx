@@ -21,9 +21,9 @@ export default function LoginPage() {
     setLoading(true);
     try {
       const supabase = createClient();
-      const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
+      const { error: signInError } =       await supabase.auth.signInWithPassword({ email, password });
       if (signInError) throw signInError;
-      router.push("/panel");
+      router.push("/auth/continue");
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "No pudimos entrar. Revisá tus datos.");

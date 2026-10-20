@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { VirtualCard } from "@/components/loyalty/VirtualCard";
 import { OtherCards } from "@/components/loyalty/OtherCards";
 import { PushOptIn } from "@/components/loyalty/PushOptIn";
+import { SuspensionBanner } from "@/components/panel/SuspensionBanner";
 
 export const dynamic = "force-dynamic";
 
@@ -13,12 +14,14 @@ export default async function CardPage({ params }: { params: Promise<{ token: st
   if (!card) notFound();
   const { data: program } = await admin.from("loyalty_programs").select("*").eq("id", card.program_id).single();
   const { data: member } = await admin.from("loyalty_members").select("name").eq("id", card.member_id).single();
-  const { data: business } = await admin.from("businesses").select("name").eq("id", card.business_id).single();
+  const { data: business } = await admin.from("businesses").select("name,status").eq("id", card.business_id).single();
   if (!program) notFound();
+  const suspended = business?.status === "suspended";
 
   return (
     <div style={{ background: "#20201F", minHeight: "100dvh", color: "#F0F0EE" }}>
       <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}>
+        {suspended ? <SuspensionBanner reason="El negocio está suspendido temporalmente." /> : null}
         <VirtualCard
           businessName={business?.name ?? ""}
           cardTitle={program.card_title}
@@ -38,11 +41,11 @@ export default async function CardPage({ params }: { params: Promise<{ token: st
           fontFamily={program.font_family}
           template={program.template ?? "moderno"}
         />
-        <OtherCards token={token} />
+        {!suspended && <OtherCards token={token} />}
         <p style={{ color: "#5C5C59", fontSize: 12, marginTop: 16, textAlign: "center" }}>
           Podés agregar esta página a tu pantalla de inicio.
         </p>
-        <PushOptIn cardToken={token} />
+        {!suspended && <PushOptIn cardToken={token} />}
       </div>
     </div>
   );

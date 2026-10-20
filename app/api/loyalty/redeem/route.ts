@@ -1,5 +1,5 @@
 import { NextResponse, after } from "next/server";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { redeemSchema } from "@/lib/loyalty/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateObject } from "@/lib/wallet/google";
@@ -9,6 +9,8 @@ import { notifyN8n } from "@/lib/loyalty/notify";
 export async function POST(req: Request) {
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const json = await req.json().catch(() => null);
   const parsed = redeemSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });

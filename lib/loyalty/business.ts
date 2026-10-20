@@ -1,5 +1,20 @@
 import { headers } from "next/headers";
+import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+
+export function isBusinessSuspended(business: { status?: string | null } | null | undefined) {
+  return business?.status === "suspended";
+}
+
+// Respuesta estándar para endpoints mutantes de un negocio suspendido.
+// Pre-migración status es undefined y el negocio se considera activo.
+export function suspendedResponse(
+  business: { status?: string | null } | null | undefined,
+  message = "Tu cuenta está suspendida. Contactá a soporte para reactivarla."
+) {
+  if (!isBusinessSuspended(business)) return null;
+  return NextResponse.json({ error: message, suspended: true }, { status: 403 });
+}
 
 export async function getMyBusiness() {
   const supabase = await createClient();

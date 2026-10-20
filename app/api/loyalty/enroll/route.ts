@@ -42,6 +42,14 @@ export async function POST(req: Request) {
   if (!program || program.status !== "active")
     return NextResponse.json({ error: "Esta tarjeta no está disponible ahora." }, { status: 404 });
 
+  const { data: businessStatus } = await admin
+    .from("businesses")
+    .select("status")
+    .eq("id", program.business_id)
+    .maybeSingle();
+  if (businessStatus?.status === "suspended")
+    return NextResponse.json({ error: "La cuenta del negocio está suspendida." }, { status: 403 });
+
   // Resolver miembro: por tarjeta existente del mismo negocio (sin datos)
   // o por teléfono (registrado o nuevo).
   let memberId: string;

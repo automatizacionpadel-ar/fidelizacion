@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { programSchema } from "@/lib/loyalty/schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -7,6 +7,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const { id } = await params;
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const json = await req.json().catch(() => null);
   const parsed = programSchema.partial().safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
@@ -29,6 +31,8 @@ export async function DELETE(_req: Request, { params }: { params: Promise<{ id: 
   const { id } = await params;
   const { supabase, user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
 
   const { data: program } = await supabase
     .from("loyalty_programs")

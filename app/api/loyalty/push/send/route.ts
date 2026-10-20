@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
-import { getMyBusiness } from "@/lib/loyalty/business";
+import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { sendPushSchema } from "@/lib/push/schemas";
 import { sendPush } from "@/lib/push/sender";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -14,6 +14,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 export async function POST(req: Request) {
   const { user, business } = await getMyBusiness();
   if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
+  const suspended = suspendedResponse(business);
+  if (suspended) return suspended;
   const json = await req.json().catch(() => null);
   const parsed = sendPushSchema.safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Revisá título y mensaje." }, { status: 400 });
