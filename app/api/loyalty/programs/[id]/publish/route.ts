@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getMyBusiness, suspendedResponse } from "@/lib/loyalty/business";
 import { upsertClass, walletConfigured } from "@/lib/wallet/google";
 import { ensureFlatWalletLogo } from "@/lib/wallet/walletLogo";
+import { cardLimitMessage, cardLimits } from "@/lib/billing";
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -16,6 +17,24 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     .eq("business_id", business.id)
     .single();
   if (error || !program) return NextResponse.json({ error: "Programa no encontrado." }, { status: 404 });
+
+  if (program.status !== "active") {
+    const limits = cardLimits(business.plan);
+    const { count: activeCount } = await supabase
+      .from("loyalty_programs")
+      .select("id", { count: "exact", head: true })
+      .eq("business_id", business.id)
+      .eq("status", "active");
+    if ((activeCount ?? 0) >= limits.active) {
+      return NextResponse.json(
+        {
+          error: `${cardLimitMessage(business.plan, "active")} Pausá otra tarjeta para activar esta.`,
+          limit: "active",
+        },
+        { status: 403 }
+      );
+    }
+  }
 
   let google_class_id = program.google_class_id as string | null;
   let wallet_warning: string | null = null;

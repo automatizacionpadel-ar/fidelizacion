@@ -9,11 +9,9 @@ const MAX_SIZE = 5 * 1024 * 1024;
 
 export function PaymentReceiptForm({
   paymentId,
-  reference,
   onUploaded,
 }: {
   paymentId: string;
-  reference: string;
   onUploaded: () => void;
 }) {
   const [file, setFile] = useState<File | null>(null);
@@ -57,33 +55,29 @@ export function PaymentReceiptForm({
   }
 
   return (
-    <form onSubmit={submit} style={{ marginTop: 12, borderTop: "1px solid #3D3D3B", paddingTop: 12 }}>
-      <div className="grid gap-3 md:grid-cols-2">
-        <div>
-          <Label htmlFor={`receipt-${paymentId}`}>Comprobante</Label>
-          <input
-            id={`receipt-${paymentId}`}
-            type="file"
-            accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
-            onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-            style={{ width: "100%", color: "#F0F0EE", fontSize: 14 }}
-          />
-          <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 4 }}>
-            PDF o imagen, hasta 5 MB. Referencia: {reference}
-          </p>
-        </div>
-        <div>
-          <Label htmlFor={`note-${paymentId}`}>Nota (opcional)</Label>
-          <Input
-            id={`note-${paymentId}`}
-            value={note}
-            onChange={(e) => setNote(e.target.value)}
-            placeholder="Ej. Transferencia del 20/10"
-          />
-        </div>
+    <form onSubmit={submit} style={{ marginTop: 12 }}>
+      <div>
+        <Label htmlFor={`receipt-${paymentId}`}>Comprobante</Label>
+        <input
+          id={`receipt-${paymentId}`}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png,.webp,application/pdf,image/jpeg,image/png,image/webp"
+          onChange={(e) => setFile(e.target.files?.[0] ?? null)}
+          style={{ width: "100%", color: "#F0F0EE", fontSize: 14 }}
+        />
+        <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 4 }}>PDF o imagen, hasta 5 MB.</p>
+      </div>
+      <div style={{ marginTop: 12 }}>
+        <Label htmlFor={`note-${paymentId}`}>Nota (opcional)</Label>
+        <Input
+          id={`note-${paymentId}`}
+          value={note}
+          onChange={(e) => setNote(e.target.value)}
+          placeholder="Ej. Transferencia del 20/10"
+        />
       </div>
       {error ? <p style={{ color: "#f87171", fontSize: 13, marginTop: 8 }}>{error}</p> : null}
-      <div style={{ marginTop: 10 }}>
+      <div style={{ marginTop: 12 }}>
         <Button type="submit" disabled={saving}>
           {saving ? "Enviando…" : "Enviar comprobante"}
         </Button>

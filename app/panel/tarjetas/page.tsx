@@ -4,6 +4,8 @@ import { createClient } from "@/lib/supabase/server";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { DeleteProgramIconButton } from "@/components/loyalty/DeleteProgramIconButton";
+import { ProgramStatusButton } from "@/components/loyalty/ProgramStatusButton";
+import { PLANS, cardLimits, normalizePlan } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +18,7 @@ export default async function TarjetasPage() {
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("id")
+    .select("id,plan")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -29,6 +31,12 @@ export default async function TarjetasPage() {
     .select("id,name,card_title,card_type,status,goal,branches(name)")
     .eq("business_id", business.id)
     .order("created_at", { ascending: false });
+
+  const plan = normalizePlan((business as { plan?: string }).plan);
+  const limits = cardLimits(plan);
+  const totalCards = programs?.length ?? 0;
+  const activeCards = (programs ?? []).filter((p) => p.status === "active").length;
+  const canCreate = totalCards < limits.total;
 
   const { data: cards } = await supabase
     .from("loyalty_cards")
@@ -45,10 +53,51 @@ export default async function TarjetasPage() {
         <div>
           <h1 style={{ fontSize: 26, fontWeight: 800 }}>Tarjetas</h1>
           <p style={{ color: "#9A9A96", fontSize: 14 }}>Tus tarjetas de sellos o puntos.</p>
+          <div style={{ marginTop: 10 }}>
+            <span
+              style={{
+                display: "inline-block",
+                background: "linear-gradient(135deg, #7AB619, #9AD53A)",
+                color: "#20201F",
+                borderRadius: 999,
+                padding: "3px 12px",
+                fontSize: 14,
+                fontWeight: 900,
+                boxShadow: "0 4px 16px rgba(122,182,25,0.2)",
+              }}
+            >
+              Plan {PLANS[plan].label}
+            </span>
+            <div className="grid gap-3 sm:grid-cols-2" style={{ marginTop: 10, maxWidth: 420 }}>
+              <PlanUsageBar
+                label="Tarjetas activas"
+                value={activeCards}
+                max={limits.active}
+                color="#7AB619"
+              />
+              <PlanUsageBar
+                label="Tarjetas creadas"
+                value={totalCards}
+                max={limits.total}
+                color="#8B5CF6"
+              />
+            </div>
+            {activeCards >= limits.active ? (
+              <p style={{ color: "#f59e0b", fontSize: 12, marginTop: 8 }}>
+                Límite de tarjetas activas alcanzado. Pausá una para activar otra.
+              </p>
+            ) : null}
+          </div>
         </div>
-        <Link href="/panel/programas/nuevo">
-          <Button>＋ Crear tarjeta</Button>
-        </Link>
+        {canCreate ? (
+          <Link href="/panel/programas/nuevo">
+            <Button>＋ Crear tarjeta</Button>
+          </Link>
+        ) : (
+          <Button disabled title={`Límite de ${limits.total} tarjetas del plan ${PLANS[plan].label}`}>
+            Límite de tarjetas alcanzado
+          </Button>
+        )}
       </div>
 
       {!programs || programs.length === 0 ? (
@@ -82,6 +131,7 @@ export default async function TarjetasPage() {
                 <Link href={`/panel/programas/${p.id}`}><Button variant="secondary">Editar</Button></Link>
                 <Link href={`/panel/${p.id}/qr`}><Button variant="secondary">Ver QR</Button></Link>
                 <Link href="/panel/escanear"><Button variant="secondary">Escanear</Button></Link>
+                <ProgramStatusButton programId={p.id} cardTitle={p.card_title} status={p.status} />
                 <DeleteProgramIconButton
                   programId={p.id}
                   cardTitle={p.card_title}
@@ -107,5 +157,53 @@ function StatusBadge({ status }: { status: string }) {
     <span style={{ background: s.bg, color: "#20201F", fontSize: 12, fontWeight: 800, borderRadius: 999, padding: "2px 10px" }}>
       {s.label}
     </span>
+  );
+}
+
+function PlanUsageBar({
+  label,
+  value,
+  max,
+  color,
+}: {
+  label: string;
+  value: number;
+  max: number;
+  color: string;
+}) {
+  const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
+  return (
+    <div>
+      <div className="flex items-center justify-between" style={{ fontSize: 12 }}>
+        <span style={{ color: "#9A9A96" }}>{label}</span>
+        <span style={{ color: "#F0F0EE", fontWeight: 800 }}>{value}/{max}</span>
+      </div>
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-valuenow={value}
+        style={{
+          marginTop: 5,
+          height: 8,
+          borderRadius: 999,
+          background: "#20201F",
+          border: "1px solid #3D3D3B",
+          overflow: "hidden",
+        }}
+      >
+        <div
+          style={{
+            width: `${pct}%`,
+            height: "100%",
+            borderRadius: 999,
+            background: color,
+            boxShadow: `0 0 8px ${color}66`,
+            transition: "width 0.3s ease",
+          }}
+        />
+      </div>
+    </div>
   );
 }

@@ -17,6 +17,27 @@ export function planPrice(p: string | null | undefined): number {
   return PLANS[normalizePlan(p)].price;
 }
 
+// Límites de tarjetas de fidelización por plan.
+export const CARD_LIMITS: Record<PlanId, { total: number; active: number }> = {
+  base: { total: 3, active: 1 },
+  pro: { total: 6, active: 3 },
+};
+
+export function cardLimits(p: string | null | undefined) {
+  return CARD_LIMITS[normalizePlan(p)];
+}
+
+export function cardLimitMessage(p: string | null | undefined, kind: "total" | "active"): string {
+  const plan = normalizePlan(p);
+  const limits = CARD_LIMITS[plan];
+  if (kind === "total") {
+    return `El plan ${PLANS[plan].label} permite hasta ${limits.total} tarjetas diferentes.`;
+  }
+  return `El plan ${PLANS[plan].label} permite hasta ${limits.active} ${
+    limits.active === 1 ? "tarjeta activa" : "tarjetas activas"
+  } al mismo tiempo.`;
+}
+
 export const CURRENCY = "ARS";
 
 export const PAYMENT_METHODS = [
@@ -42,6 +63,13 @@ export function periodLabel(period: string): string {
   const [y, m] = period.split("-").map(Number);
   if (!y || !m || m < 1 || m > 12) return period;
   return `${MONTHS[m - 1]} ${y}`;
+}
+
+// "2026-10" -> "Octubre"
+export function periodMonthLabel(period: string): string {
+  const [, m] = period.split("-").map(Number);
+  if (!m || m < 1 || m > 12) return period;
+  return MONTHS[m - 1];
 }
 
 export function formatMoney(amount: number): string {

@@ -12,9 +12,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   const json = await req.json().catch(() => null);
   const parsed = programSchema.partial().safeParse(json);
   if (!parsed.success) return NextResponse.json({ error: "Datos inválidos." }, { status: 400 });
+  // El estado solo cambia por /publish o /pause, para poder aplicar los límites del plan.
+  const fields = { ...parsed.data };
+  delete fields.status;
+  if (Object.keys(fields).length === 0) {
+    return NextResponse.json({ error: "No hay cambios para guardar." }, { status: 400 });
+  }
   const { data, error } = await supabase
     .from("loyalty_programs")
-    .update({ ...parsed.data })
+    .update(fields)
     .eq("id", id)
     .eq("business_id", business.id)
     .select("*")
