@@ -9,6 +9,7 @@ import { KpiCard } from "@/components/admin/KpiCard";
 import { PlanBadge, StatusBadge } from "@/components/admin/StatusBadge";
 import { ClientEditForm } from "@/components/admin/ClientEditForm";
 import { ClientActions } from "@/components/admin/ClientActions";
+import { AdminPaymentsPanel } from "@/components/admin/AdminPaymentsPanel";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +58,14 @@ export default async function AdminClientDetailPage({
         <KpiCard label="Activas (30d)" value={client.active_cards_30d} />
         <KpiCard label="Movimientos" value={client.transactions} accent="#F0F0EE" />
       </div>
+
+      <Card style={{ marginTop: 16 }}>
+        <h2 style={{ fontSize: 16, fontWeight: 800 }}>Pagos</h2>
+        <p style={{ fontSize: 12, color: "#9A9A96", marginTop: 4, marginBottom: 12 }}>
+          Al confirmar un pago, el negocio se activa automáticamente.
+        </p>
+        <AdminPaymentsPanel payments={client.payments} />
+      </Card>
 
       <div className="grid gap-4 lg:grid-cols-[340px_1fr]" style={{ marginTop: 16 }}>
         <div>

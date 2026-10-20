@@ -6,13 +6,15 @@ export type AdminAction =
   | "client.suspend"
   | "client.resume"
   | "client.delete"
+  | "payment.mark_paid"
   | "ally.create"
   | "ally.update"
   | "ally.suspend"
   | "ally.resume"
   | "ally.delete"
   | "role.grant"
-  | "role.revoke";
+  | "role.revoke"
+  | "settings.bank_update";
 
 export async function logAdminAction({
   actorUserId,
@@ -23,7 +25,7 @@ export async function logAdminAction({
 }: {
   actorUserId: string;
   action: AdminAction;
-  entityType: "business" | "ally" | "user_role";
+  entityType: "business" | "ally" | "user_role" | "settings";
   entityId: string | null;
   metadata?: Record<string, unknown>;
 }) {

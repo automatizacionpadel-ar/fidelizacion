@@ -3,7 +3,7 @@ import { getSuperAdminApi } from "@/lib/auth/roles";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { clientDeleteSchema, clientUpdateSchema } from "@/lib/admin/schemas";
 import { logAdminAction } from "@/lib/admin/audit";
-import { collectBusinessFilePaths, removeStoragePaths } from "@/lib/admin/storage";
+import { collectBusinessFilePaths, removeBusinessReceipts, removeStoragePaths } from "@/lib/admin/storage";
 import { assertSameOrigin } from "@/lib/admin/http";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -101,7 +101,10 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   const rpc = result as { ok?: boolean; error?: string; owner_user_id?: string };
   if (!rpc?.ok) return NextResponse.json({ error: rpc?.error ?? "No se pudo eliminar." }, { status: 400 });
 
-  const filesRemoved = await removeStoragePaths(files);
+  const [filesRemoved, receiptsRemoved] = await Promise.all([
+    removeStoragePaths(files),
+    removeBusinessReceipts(id),
+  ]);
 
   let accountDeleted = false;
   let warning: string | null = null;
@@ -129,6 +132,7 @@ export async function DELETE(req: Request, { params }: { params: Promise<{ id: s
   return NextResponse.json({
     ok: true,
     files_removed: filesRemoved,
+    receipts_removed: receiptsRemoved,
     account_deleted: accountDeleted,
     warning,
   });

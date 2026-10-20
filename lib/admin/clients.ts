@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
-import type { AdminBusinessDetail, AdminBusinessRow, AdminListResult } from "@/lib/admin/types";
+import type { AdminBusinessDetail, AdminBusinessRow, AdminListResult, AdminPayment } from "@/lib/admin/types";
+import { createReceiptSignedUrl } from "@/lib/admin/storage";
 
 export const ADMIN_PAGE_SIZE = 25;
 
@@ -79,7 +80,7 @@ export async function getAdminClientDetail(id: string): Promise<AdminBusinessDet
   if (error || !business) return null;
 
   const monthAgo = new Date(Date.now() - 30 * 24 * 3600 * 1000).toISOString();
-  const [{ count: members }, { count: cards }, { count: transactions }, { count: activeCards }, { data: ally }, owner] =
+  const [{ count: members }, { count: cards }, { count: transactions }, { count: activeCards }, { data: ally }, owner, { data: paymentRows }] =
     await Promise.all([
       admin.from("loyalty_members").select("id", { count: "exact", head: true }).eq("business_id", id),
       admin.from("loyalty_cards").select("id", { count: "exact", head: true }).eq("business_id", id),
@@ -93,7 +94,20 @@ export async function getAdminClientDetail(id: string): Promise<AdminBusinessDet
         ? admin.from("allies").select("name").eq("id", business.ally_id).maybeSingle()
         : Promise.resolve({ data: null }),
       ownerInfo(business.owner_user_id),
+      admin
+        .from("service_payments")
+        .select("*")
+        .eq("business_id", id)
+        .order("period", { ascending: false })
+        .limit(24),
     ]);
+
+  const payments: AdminPayment[] = await Promise.all(
+    ((paymentRows ?? []) as Omit<AdminPayment, "receipt_url">[]).map(async (payment) => ({
+      ...payment,
+      receipt_url: payment.receipt_path ? await createReceiptSignedUrl(payment.receipt_path) : null,
+    }))
+  );
 
   return {
     ...(business as AdminBusinessDetail),
@@ -105,6 +119,7 @@ export async function getAdminClientDetail(id: string): Promise<AdminBusinessDet
     owner_email: owner.email,
     owner_name: owner.name,
     owner_phone: owner.phone,
+    payments,
   };
 }
 

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getMyBusiness } from "@/lib/loyalty/business";
-import { PAYMENT_METHODS, PLAN_IDS, currentPeriod, normalizePlan, planPrice, type PlanId } from "@/lib/billing";
+import { PLAN_IDS, currentPeriod, normalizePlan, planPrice, type PlanId } from "@/lib/billing";
+import { normalizeBankSettings } from "@/lib/bank-settings";
 
 function missingTable(error: { message?: string } | null): boolean {
   const m = error?.message ?? "";
@@ -33,12 +34,12 @@ export async function GET() {
       .insert({ business_id: business.id, period, amount: fee });
   }
 
-  const [{ data: pending }, { data: history }] = await Promise.all([
+  const [{ data: pending }, { data: history }, { data: bank }] = await Promise.all([
     supabase
       .from("service_payments")
       .select("*")
       .eq("business_id", business.id)
-      .eq("status", "pending")
+      .in("status", ["pending", "pending_review"])
       .order("period", { ascending: true }),
     supabase
       .from("service_payments")
@@ -47,6 +48,7 @@ export async function GET() {
       .eq("status", "paid")
       .order("paid_at", { ascending: false })
       .limit(24),
+    supabase.from("bank_transfer_settings").select("*").eq("id", 1).maybeSingle(),
   ]);
 
   return NextResponse.json({
@@ -54,34 +56,9 @@ export async function GET() {
     history: history ?? [],
     plan,
     monthly_fee: fee,
+    business: { name: business.name, slug: business.slug },
+    bank: normalizeBankSettings(bank),
   });
-}
-
-export async function POST(req: Request) {
-  const { supabase, user, business } = await getMyBusiness();
-  if (!user || !business) return NextResponse.json({ error: "No autorizado." }, { status: 401 });
-
-  const json = await req.json().catch(() => null);
-  const id = String(json?.id ?? "");
-  const method = String(json?.method ?? "");
-  const note = String(json?.note ?? "").slice(0, 300);
-  if (!id) return NextResponse.json({ error: "Falta el pago a registrar." }, { status: 400 });
-  if (!PAYMENT_METHODS.some((m) => m.value === method)) {
-    return NextResponse.json({ error: "Método de pago inválido." }, { status: 400 });
-  }
-
-  const { data, error } = await supabase
-    .from("service_payments")
-    .update({ status: "paid", method, note, paid_at: new Date().toISOString() })
-    .eq("id", id)
-    .eq("business_id", business.id)
-    .eq("status", "pending")
-    .select("*")
-    .maybeSingle();
-
-  if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-  if (!data) return NextResponse.json({ error: "Ese pago ya fue registrado o no existe." }, { status: 404 });
-  return NextResponse.json({ payment: data });
 }
 
 export async function PUT(req: Request) {
@@ -92,6 +69,18 @@ export async function PUT(req: Request) {
   const plan = String(json?.plan ?? "") as PlanId;
   if (!PLAN_IDS.includes(plan)) {
     return NextResponse.json({ error: "Plan inválido." }, { status: 400 });
+  }
+
+  const { count: inReview } = await supabase
+    .from("service_payments")
+    .select("id", { count: "exact", head: true })
+    .eq("business_id", business.id)
+    .eq("status", "pending_review");
+  if ((inReview ?? 0) > 0) {
+    return NextResponse.json(
+      { error: "Tenés un comprobante en revisión. Esperá la confirmación para cambiar de plan." },
+      { status: 409 }
+    );
   }
 
   const { error: planError } = await supabase

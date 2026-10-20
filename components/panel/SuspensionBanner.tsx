@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export function SuspensionBanner({ reason }: { reason?: string | null }) {
   return (
     <div
@@ -15,7 +17,10 @@ export function SuspensionBanner({ reason }: { reason?: string | null }) {
       </p>
       <p style={{ fontSize: 13, color: "#F0F0EE", marginTop: 4, lineHeight: 1.5 }}>
         No se pueden sumar sellos, canjear premios, editar tarjetas ni enviar avisos.
-        Podés consultar tus datos y regularizar tus pagos.
+        Podés consultar tus datos y regularizar tus pagos.{" "}
+        <Link href="/panel/pagos" style={{ color: "#7AB619", fontWeight: 700, textDecoration: "underline" }}>
+          Ir a pagos
+        </Link>
         {reason ? <span style={{ color: "#9A9A96" }}> Motivo: {reason}</span> : null}
       </p>
     </div>

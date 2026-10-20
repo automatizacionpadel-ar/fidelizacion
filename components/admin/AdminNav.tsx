@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BanknoteIcon,
   BellIcon,
   CollapseIcon,
   DashboardIcon,
@@ -16,6 +17,7 @@ const LINKS = [
   { href: "/admin", label: "Dashboard", Icon: DashboardIcon, exact: true },
   { href: "/admin/clientes", label: "Clientes", Icon: UsersIcon, exact: false },
   { href: "/admin/aliados", label: "Aliados", Icon: StoreIcon, exact: false },
+  { href: "/admin/configuracion-bancaria", label: "Configuración bancaria", Icon: BanknoteIcon, exact: false },
   { href: "/admin/auditoria", label: "Auditoría", Icon: BellIcon, exact: false },
 ];
 

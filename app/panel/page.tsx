@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Stats } from "@/components/loyalty/Stats";
 import { ActivityStats } from "@/components/loyalty/ActivityStats";
-import { resolveReferralFromMetadata } from "@/lib/auth/referrals";
+import { normalizeAllyId, resolveReferralFromMetadata } from "@/lib/auth/referrals";
 
 export const dynamic = "force-dynamic";
 
@@ -94,6 +94,7 @@ function CreateBusinessForm({
     const { data: existing } = await supabase.from("businesses").select("slug").eq("slug", slug).maybeSingle();
     if (existing) slug = `${slug}-${user.id.slice(0, 6)}`;
     const referral = await resolveReferralFromMetadata(user.user_metadata);
+    const referred = normalizeAllyId(user.user_metadata?.aliado_id) !== null;
     const requestedPlan = user.user_metadata?.plan;
     const plan = normalizePlan(typeof requestedPlan === "string" ? requestedPlan : null);
     const { error } = await supabase.from("businesses").insert({
@@ -102,6 +103,13 @@ function CreateBusinessForm({
       slug,
       plan,
       ...(referral ? { ally_id: referral.id } : {}),
+      ...(referred
+        ? {
+            status: "suspended",
+            suspended_at: new Date().toISOString(),
+            suspended_reason: "Pendiente de activación por un administrador.",
+          }
+        : {}),
     });
     if (!error) redirect("/panel");
   }

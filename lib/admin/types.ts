@@ -18,11 +18,30 @@ export type AdminBusinessRow = {
   ally_name: string | null;
 };
 
+export type AdminPayment = {
+  id: string;
+  business_id: string;
+  period: string;
+  amount: number;
+  status: "pending" | "pending_review" | "paid";
+  method: string | null;
+  note: string;
+  receipt_path: string;
+  receipt_name: string;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  paid_at: string | null;
+  created_at: string;
+  receipt_url: string | null;
+};
+
 export type AdminBusinessDetail = AdminBusinessRow & {
   members: number;
   cards: number;
   transactions: number;
   active_cards_30d: number;
+  payments: AdminPayment[];
 };
 
 export type AdminAllyRow = AllyRecord & {

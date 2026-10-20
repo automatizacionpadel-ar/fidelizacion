@@ -52,3 +52,39 @@ export async function removeBusinessFiles(businessId: string): Promise<number> {
   const paths = await collectBusinessFilePaths(businessId);
   return removeStoragePaths(paths);
 }
+
+// URL firmada temporal para un comprobante del bucket privado "receipts".
+export async function createReceiptSignedUrl(path: string): Promise<string | null> {
+  if (!path) return null;
+  try {
+    const admin = createAdminClient();
+    const { data, error } = await admin.storage.from("receipts").createSignedUrl(path, 3600);
+    if (error) {
+      console.error("[admin-storage]", error.message);
+      return null;
+    }
+    return data.signedUrl;
+  } catch (error) {
+    console.error("[admin-storage]", (error as Error).message);
+    return null;
+  }
+}
+
+// Borra best-effort los comprobantes de pago del negocio (bucket privado).
+export async function removeBusinessReceipts(businessId: string): Promise<number> {
+  try {
+    const admin = createAdminClient();
+    const { data: files, error } = await admin.storage.from("receipts").list(businessId, { limit: 1000 });
+    if (error || !files?.length) return 0;
+    const paths = files.map((file) => `${businessId}/${file.name}`);
+    const { error: removeError } = await admin.storage.from("receipts").remove(paths);
+    if (removeError) {
+      console.error("[admin-storage]", removeError.message);
+      return 0;
+    }
+    return paths.length;
+  } catch (error) {
+    console.error("[admin-storage]", (error as Error).message);
+    return 0;
+  }
+}

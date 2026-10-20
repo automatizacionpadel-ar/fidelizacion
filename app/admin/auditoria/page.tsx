@@ -11,6 +11,7 @@ const ACTION_LABELS: Record<string, string> = {
   "client.suspend": "Cliente suspendido",
   "client.resume": "Cliente reactivado",
   "client.delete": "Cliente eliminado",
+  "payment.mark_paid": "Pago confirmado y cliente activado",
   "ally.create": "Aliado creado",
   "ally.update": "Aliado actualizado",
   "ally.suspend": "Aliado suspendido",
@@ -18,6 +19,7 @@ const ACTION_LABELS: Record<string, string> = {
   "ally.delete": "Aliado eliminado",
   "role.grant": "Rol asignado",
   "role.revoke": "Rol revocado",
+  "settings.bank_update": "Datos bancarios actualizados",
 };
 
 export default async function AuditPage() {

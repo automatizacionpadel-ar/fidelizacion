@@ -3,17 +3,26 @@
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { Input, Label } from "@/components/ui/Input";
 import { Table } from "@/components/ui/Table";
-import { PAYMENT_METHODS, PLANS, PLAN_IDS, formatMoney, periodLabel, type PlanId } from "@/lib/billing";
+import { PaymentReceiptForm } from "@/components/loyalty/PaymentReceiptForm";
+import {
+  PLANS,
+  PLAN_IDS,
+  formatMoney,
+  periodLabel,
+  type PlanId,
+} from "@/lib/billing";
+import { bankDetailRows, hasBankSettings, type BankSettings } from "@/lib/bank-settings";
 
 type Payment = {
   id: string;
   period: string;
   amount: number;
-  status: "pending" | "paid";
+  status: "pending" | "pending_review" | "paid";
   method: string | null;
   note: string;
+  receipt_name: string;
+  submitted_at: string | null;
   paid_at: string | null;
 };
 
@@ -22,10 +31,13 @@ type BillingData = {
   history: Payment[];
   plan: PlanId;
   monthly_fee: number;
+  business: { name: string; slug: string };
+  bank: BankSettings;
 };
 
 function methodLabel(value: string | null): string {
-  return PAYMENT_METHODS.find((m) => m.value === value)?.label ?? value ?? "—";
+  if (!value) return "—";
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 function formatDate(iso: string | null): string {
@@ -36,10 +48,6 @@ function formatDate(iso: string | null): string {
 export function BillingPanel() {
   const [data, setData] = useState<BillingData | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [payingId, setPayingId] = useState<string | null>(null);
-  const [method, setMethod] = useState<string>("transferencia");
-  const [note, setNote] = useState("");
-  const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [changingPlan, setChangingPlan] = useState(false);
 
@@ -56,27 +64,6 @@ export function BillingPanel() {
   useEffect(() => {
     load();
   }, [load]);
-
-  async function registerPayment(id: string) {
-    setSaving(true);
-    setFormError(null);
-    try {
-      const res = await fetch("/api/billing", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({ id, method, note }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error ?? "No se pudo registrar.");
-      setPayingId(null);
-      setNote("");
-      load();
-    } catch (e) {
-      setFormError(e instanceof Error ? e.message : "No se pudo registrar.");
-    } finally {
-      setSaving(false);
-    }
-  }
 
   if (error) {
     return (
@@ -96,6 +83,7 @@ export function BillingPanel() {
   }
 
   const totalPending = data.pending.reduce((a, p) => a + Number(p.amount), 0);
+  const hasReview = data.pending.some((p) => p.status === "pending_review");
 
   async function changePlan(plan: PlanId) {
     if (plan === data?.plan || changingPlan) return;
@@ -144,7 +132,7 @@ export function BillingPanel() {
                 <p style={{ fontSize: 22, fontWeight: 800, marginTop: 4 }}>{formatMoney(PLANS[id].price)}<span style={{ fontSize: 13, fontWeight: 400, color: "#9A9A96" }}>/mes</span></p>
                 {!isCurrent && (
                   <div style={{ marginTop: 10 }}>
-                    <Button variant="secondary" disabled={changingPlan} onClick={() => changePlan(id)}>
+                    <Button variant="secondary" disabled={changingPlan || hasReview} onClick={() => changePlan(id)}>
                       {changingPlan ? "Cambiando…" : `Cambiar a ${PLANS[id].label}`}
                     </Button>
                   </div>
@@ -153,8 +141,45 @@ export function BillingPanel() {
             );
           })}
         </div>
-        {formError && !payingId && <p style={{ color: "#f87171", fontSize: 13, marginTop: 8 }}>{formError}</p>}
+        {hasReview ? (
+          <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 8 }}>
+            Podés cambiar de plan cuando se confirme el comprobante en revisión.
+          </p>
+        ) : null}
+        {formError ? <p style={{ color: "#f87171", fontSize: 13, marginTop: 8 }}>{formError}</p> : null}
       </Card>
+
+      {data.pending.length > 0 ? (
+        hasBankSettings(data.bank) ? (
+          <Card style={{ marginTop: 16, borderColor: "#7AB619" }}>
+            <p style={{ fontSize: 12, color: "#7AB619", fontWeight: 800 }}>DATOS PARA TRANSFERIR</p>
+            <dl className="grid gap-x-4 gap-y-2 md:grid-cols-2" style={{ marginTop: 12, fontSize: 14 }}>
+              {bankDetailRows(data.bank).map(([label, value]) => (
+                <div key={label}>
+                  <dt style={{ color: "#9A9A96", fontSize: 12 }}>{label}</dt>
+                  <dd style={{ fontWeight: 700, wordBreak: "break-all" }}>{value}</dd>
+                </div>
+              ))}
+            </dl>
+            {data.bank.notes ? (
+              <p style={{ color: "#F0F0EE", fontSize: 13, marginTop: 12, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
+                {data.bank.notes}
+              </p>
+            ) : null}
+            <p style={{ color: "#9A9A96", fontSize: 13, marginTop: 12, lineHeight: 1.5 }}>
+              Transferí el monto exacto de cada período y subí el comprobante.
+              Usá como referencia el nombre del negocio y el período del pago.
+            </p>
+          </Card>
+        ) : (
+          <Card style={{ marginTop: 16, borderColor: "#f59e0b" }}>
+            <p style={{ fontSize: 13, fontWeight: 800, color: "#f59e0b" }}>DATOS DE TRANSFERENCIA PENDIENTES</p>
+            <p style={{ fontSize: 14, marginTop: 4, color: "#9A9A96" }}>
+              El administrador todavía no configuró los datos bancarios. Contactalo para recibir la información.
+            </p>
+          </Card>
+        )
+      ) : null}
 
       <Card style={{ marginTop: 16 }}>
         <p style={{ fontSize: 12, color: "#9A9A96", fontWeight: 700 }}>MONTO PENDIENTE</p>
@@ -165,56 +190,48 @@ export function BillingPanel() {
           <p style={{ fontSize: 14, color: "#7AB619", marginTop: 8 }}>✓ Estás al día, no debés ningún mes.</p>
         ) : (
           <div className="flex flex-col gap-3" style={{ marginTop: 16 }}>
-            {data.pending.map((p) => (
-              <div
-                key={p.id}
-                style={{ border: "1px solid #3D3D3B", borderRadius: 10, padding: 12 }}
-              >
-                <div className="flex items-center justify-between flex-wrap gap-2">
-                  <div>
-                    <strong style={{ fontSize: 15 }}>{periodLabel(p.period)}</strong>                    <p style={{ fontSize: 14, color: "#9A9A96" }}>{formatMoney(Number(p.amount))}</p>
+            {data.pending.map((p) => {
+              const inReview = p.status === "pending_review";
+              return (
+                <div
+                  key={p.id}
+                  style={{ border: "1px solid #3D3D3B", borderRadius: 10, padding: 12 }}
+                >
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <strong style={{ fontSize: 15 }}>{periodLabel(p.period)}</strong>
+                      <p style={{ fontSize: 14, color: "#9A9A96" }}>{formatMoney(Number(p.amount))}</p>
+                    </div>
+                    {inReview ? (
+                      <span style={{ background: "#3D3D3B", color: "#F0F0EE", fontSize: 12, fontWeight: 800, borderRadius: 999, padding: "4px 10px" }}>
+                        COMPROBANTE EN REVISIÓN
+                      </span>
+                    ) : null}
                   </div>
-                  {payingId !== p.id && (
-                    <Button variant="secondary" onClick={() => { setPayingId(p.id); setFormError(null); }}>
-                      Registrar pago
-                    </Button>
+
+                  <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 6 }}>
+                    Referencia: {data.business.slug}-{p.period}
+                  </p>
+
+                  {inReview ? (
+                    <div style={{ marginTop: 8, color: "#9A9A96", fontSize: 13, lineHeight: 1.5 }}>
+                      <p>
+                        Recibimos {p.receipt_name || "tu comprobante"}
+                        {p.submitted_at ? ` el ${formatDate(p.submitted_at)}` : ""}.
+                      </p>
+                      <p>Un administrador lo va a revisar y activará la cuenta al confirmarlo.</p>
+                      {p.note ? <p style={{ marginTop: 4 }}>Nota: {p.note}</p> : null}
+                    </div>
+                  ) : (
+                    <PaymentReceiptForm
+                      paymentId={p.id}
+                      reference={`${data.business.slug}-${p.period}`}
+                      onUploaded={load}
+                    />
                   )}
                 </div>
-                {payingId === p.id && (
-                  <div className="grid gap-3 md:grid-cols-[200px_1fr]" style={{ marginTop: 12 }}>
-                    <div>
-                      <Label>Método</Label>
-                      <select
-                        value={method}
-                        onChange={(e) => setMethod(e.target.value)}
-                        style={{ width: "100%", background: "#20201F", color: "#F0F0EE", border: "1px solid #3D3D3B", borderRadius: 10, padding: "10px 12px", fontSize: 16 }}
-                      >
-                        {PAYMENT_METHODS.map((m) => (
-                          <option key={m.value} value={m.value}>{m.label}</option>
-                        ))}
-                      </select>
-                    </div>
-                    <div>
-                      <Label>Comprobante / nota (opcional)</Label>
-                      <Input
-                        value={note}
-                        onChange={(e) => setNote(e.target.value)}
-                        placeholder="Ej. Transferencia N° 12345"
-                      />
-                    </div>
-                    <div className="flex gap-2 md:col-span-2">
-                      <Button disabled={saving} onClick={() => registerPayment(p.id)}>
-                        {saving ? "Guardando…" : "Confirmar pago"}
-                      </Button>
-                      <Button variant="secondary" onClick={() => setPayingId(null)}>
-                        Cancelar
-                      </Button>
-                    </div>
-                    {formError && <p style={{ color: "#f87171", fontSize: 13, gridColumn: "1 / -1" }}>{formError}</p>}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>
@@ -222,7 +239,7 @@ export function BillingPanel() {
       <h2 style={{ fontSize: 18, fontWeight: 800, marginTop: 24 }}>Pagos realizados</h2>
       <div style={{ marginTop: 12 }}>
         <Table
-          head={["Período", "Monto", "Método", "Fecha de pago", "Comprobante"]}
+          head={["Período", "Monto", "Método", "Fecha de pago", "Nota"]}
           rows={data.history.map((p) => [
             periodLabel(p.period),
             formatMoney(Number(p.amount)),

@@ -86,7 +86,7 @@ export function ClientActions({
           <div>
             <p>
               Se bloquean altas, sellados, canjes, edición de tarjetas y avisos.
-              El cliente conserva acceso de lectura y puede registrar pagos.
+              El cliente conserva acceso de lectura y puede subir comprobantes de pago.
             </p>
             <textarea
               value={reason}

@@ -77,3 +77,24 @@ export const allyStatusSchema = z.object({
   status: z.enum(["active", "suspended"]),
   reason: z.string().max(300).optional(),
 });
+
+export const paymentReviewSchema = z.object({
+  action: z.literal("mark_paid"),
+});
+
+const bankText = (max: number) => z.string().trim().max(max).default("");
+
+export const bankSettingsSchema = z
+  .object({
+    holder: z.string().trim().min(2, "Ingresá el titular de la cuenta.").max(80),
+    bank: z.string().trim().min(2, "Ingresá el banco o billetera.").max(80),
+    accountType: bankText(60),
+    cbuCvu: bankText(40),
+    alias: bankText(80),
+    taxId: bankText(30),
+    notes: bankText(500),
+  })
+  .refine((v) => v.alias || v.cbuCvu, {
+    message: "Ingresá un alias o un CBU/CVU.",
+    path: ["cbuCvu"],
+  });
