@@ -29,7 +29,7 @@ export default async function CardPage({ params }: { params: Promise<{ token: st
         color: program.text_color ?? "#F0F0EE",
       }}
     >
-      <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}>
+      <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
         {suspended ? <SuspensionBanner reason="El negocio está suspendido temporalmente." /> : null}
         <VirtualCard
           businessName={business?.name ?? ""}
@@ -48,6 +48,7 @@ export default async function CardPage({ params }: { params: Promise<{ token: st
           stampImageUrl={program.stamp_image_url}
           fontFamily={program.font_family}
           template={program.template ?? "moderno"}
+          fill
         />
         {!suspended && <OtherCards token={token} />}
         <p style={{ color: "#5C5C59", fontSize: 12, marginTop: 16, textAlign: "center" }}>

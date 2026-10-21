@@ -47,6 +47,7 @@ type ShellProps = {
   radius?: number;
   padding?: number;
   shadow?: string;
+  fill?: boolean;
   children: ReactNode;
 };
 
@@ -62,6 +63,7 @@ export function CardShell({
   radius = 14,
   padding = 18,
   shadow,
+  fill = false,
   children,
 }: ShellProps) {
   const t = normalizeTemplate(template);
@@ -74,6 +76,14 @@ export function CardShell({
     color: textColor,
     fontFamily: font,
     padding,
+    ...(fill
+      ? {
+          minHeight: "calc(100dvh - max(20px, env(safe-area-inset-top)) - max(20px, env(safe-area-inset-bottom)))",
+          display: "flex",
+          flexDirection: "column" as const,
+          justifyContent: "space-between",
+        }
+      : {}),
   };
 
   const corners = ["tl", "tr", "bl", "br"] as const;

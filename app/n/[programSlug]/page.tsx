@@ -109,7 +109,7 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
         color: program.text_color ?? "#F0F0EE",
       }}
     >
-      <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}>
+      <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(20px, env(safe-area-inset-bottom))" }}>
         <VirtualCard
           businessName={business?.name ?? ""}
           cardTitle={program.card_title}
@@ -129,13 +129,14 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
           template={program.template ?? "moderno"}
           earnedNow={didEarn ? result.earned ?? 1 : 0}
           wonNow={won}
+          fill
         />
 
-        <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 16, textAlign: "center" }}>
-          {didEarn
-            ? "Tu tarjeta en Google Wallet se actualiza sola en unos segundos."
-            : "Acercá tu celular al punto NFC o escaneá el QR del local para sumar."}
-        </p>
+        {didEarn ? (
+          <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 16, textAlign: "center" }}>
+            Tu tarjeta en Google Wallet se actualiza sola en unos segundos.
+          </p>
+        ) : null}
       </div>
     </div>
   );

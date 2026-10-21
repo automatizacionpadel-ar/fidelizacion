@@ -24,6 +24,7 @@ export type VirtualCardProps = {
   template?: string | null;
   earnedNow?: number;
   wonNow?: number;
+  fill?: boolean;
 };
 
 export function VirtualCard(p: VirtualCardProps) {
@@ -42,6 +43,7 @@ export function VirtualCard(p: VirtualCardProps) {
         radius={20}
         padding={22}
         shadow="0 24px 60px rgba(0,0,0,0.48)"
+        fill={p.fill}
       >
         <CardFace
           businessName={p.businessName}
