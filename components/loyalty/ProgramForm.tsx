@@ -8,6 +8,8 @@ import { Input, Label } from "@/components/ui/Input";
 import { CapturePreview } from "./CapturePreview";
 import { WalletPreview } from "./WalletPreview";
 import { PhoneFrame } from "./PhoneFrame";
+import { CardPreview } from "./CardPreview";
+import { CardShell } from "./CardShell";
 import { CARD_FONTS, CARD_TEMPLATES, CARD_TEMPLATE_IDS, type CardTemplateId, STAMP_ICON_PRESETS } from "@/lib/loyalty/cardDesign";
 
 export type ProgramDraft = {
@@ -81,6 +83,7 @@ export function ProgramForm({
 }) {
   const router = useRouter();
   const [step, setStep] = useState(1);
+  const [previewTab, setPreviewTab] = useState<"card" | "capture">("card");
   const [d, setD] = useState<ProgramDraft>({ ...defaults, ...initial });
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -609,21 +612,66 @@ export function ProgramForm({
             />
           </>
         ) : (
-          <PhoneFrame label={step === 3 ? "Vista previa · captación (/f)" : "Vista previa en vivo · captación"} >
-            <CapturePreview
-              businessName={businessName}
-              cardTitle={d.card_title}
-              cardType={d.card_type}
-              goal={d.goal}
-              rewardDescription={d.reward_description}
-              terms={d.terms}
-              backgroundColor={d.background_color}
-              textColor={d.text_color}
-              accentColor={d.accent_color}
-              logoUrl={d.logo_url}
-              fontFamily={d.font_family}
-            />
-          </PhoneFrame>
+          <>
+            <div className="flex gap-2" style={{ marginBottom: 8 }}>
+              <PreviewTab active={previewTab === "card"} onClick={() => setPreviewTab("card")}>
+                Tarjeta virtual
+              </PreviewTab>
+              <PreviewTab active={previewTab === "capture"} onClick={() => setPreviewTab("capture")}>
+                Captación
+              </PreviewTab>
+            </div>
+
+            {previewTab === "card" ? (
+              <PhoneFrame label="Vista previa · tarjeta del cliente">
+                <div
+                  className="card-page"
+                  style={{
+                    background: `radial-gradient(120% 78% at 50% -12%, ${d.accent_color}38, transparent 58%), radial-gradient(85% 65% at 108% 108%, ${d.accent_color}22, transparent 55%), ${d.background_color}`,
+                    minHeight: 540,
+                    color: d.text_color,
+                    padding: "20px 14px 28px",
+                  }}
+                >
+                  <CardPreview
+                    businessName={businessName}
+                    memberName="Cliente"
+                    cardTitle={d.card_title}
+                    cardType={d.card_type}
+                    goal={d.goal}
+                    rewardDescription={d.reward_description}
+                    backgroundColor={d.background_color}
+                    textColor={d.text_color}
+                    accentColor={d.accent_color}
+                    logoUrl={d.logo_url}
+                    stampIcon={d.stamp_icon}
+                    stampImageUrl={d.stamp_image_url}
+                    fontFamily={d.font_family}
+                    template={d.template}
+                  />
+                  <p style={{ color: d.text_color, opacity: 0.5, fontSize: 10, marginTop: 14, textAlign: "center" }}>
+                    Progreso de ejemplo · así la ve el cliente al escanear el QR o acercar el celular.
+                  </p>
+                </div>
+              </PhoneFrame>
+            ) : (
+              <PhoneFrame label={step === 3 ? "Vista previa · captación (/f)" : "Vista previa en vivo · captación"}>
+                <CapturePreview
+                  businessName={businessName}
+                  cardTitle={d.card_title}
+                  cardType={d.card_type}
+                  goal={d.goal}
+                  rewardDescription={d.reward_description}
+                  terms={d.terms}
+                  backgroundColor={d.background_color}
+                  textColor={d.text_color}
+                  accentColor={d.accent_color}
+                  logoUrl={d.logo_url}
+                  fontFamily={d.font_family}
+                />
+              </PhoneFrame>
+            )}
+          </>
         )}
       </div>
     </div>
@@ -652,49 +700,98 @@ function Steps({ step, setStep }: { step: number; setStep: (n: number) => void }
   );
 }
 
+function PreviewTab({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        minHeight: 36,
+        borderRadius: 9,
+        border: active ? "1px solid #7AB619" : "1px solid #3D3D3B",
+        background: active ? "#7AB619" : "transparent",
+        color: active ? "#20201F" : "#9A9A96",
+        fontSize: 12,
+        fontWeight: 800,
+        cursor: "pointer",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
 function TemplateThumb({ id }: { id: CardTemplateId }) {
   const preset = CARD_TEMPLATES[id].preset;
-  const base: React.CSSProperties = {
-    height: 64,
-    borderRadius: 10,
-    overflow: "hidden",
-    position: "relative",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-  };
-  const sample = (
-    <span style={{ fontWeight: 800, fontSize: 18, color: preset.text_color, position: "relative", zIndex: 1 }}>
-      Aa
-    </span>
-  );
-  if (id === "clasico") {
-    return (
-      <div style={{ ...base, background: preset.background_color, border: `2px solid ${preset.accent_color}`, outline: `1px solid ${preset.accent_color}66`, outlineOffset: -6 }}>
-        {sample}
-      </div>
-    );
-  }
-  if (id === "glass") {
-    return (
-      <div style={{ ...base, background: `linear-gradient(135deg, ${preset.accent_color}88, ${preset.background_color} 60%, #7c3aed66)`, border: "1px solid rgba(255,255,255,0.4)" }}>
-        <div style={{ position: "absolute", inset: 8, borderRadius: 8, background: "rgba(255,255,255,0.15)", backdropFilter: "blur(6px)" }} />
-        {sample}
-      </div>
-    );
-  }
-  if (id === "futurista") {
-    return (
-      <div style={{ ...base, background: preset.background_color, border: `1px solid ${preset.accent_color}`, boxShadow: `0 0 14px ${preset.accent_color}88, inset 0 0 14px ${preset.accent_color}33` }}>
-        {sample}
-      </div>
-    );
-  }
+
   return (
-    <div style={{ ...base, background: preset.background_color, border: "1px solid #3D3D3B" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 6, background: preset.accent_color }} />
-      {sample}
-    </div>
+    <CardShell
+      template={id}
+      backgroundColor={preset.background_color}
+      textColor={preset.text_color}
+      accentColor={preset.accent_color}
+      fontFamily={preset.font_family}
+      radius={10}
+      padding={10}
+      shadow="0 6px 18px rgba(0,0,0,0.35)"
+    >
+      <div style={{ height: 58, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+          <span style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <span style={{ width: 5, height: 5, borderRadius: 999, background: preset.accent_color }} />
+            <span style={{ width: 42, height: 4, borderRadius: 999, background: preset.text_color, opacity: 0.45 }} />
+          </span>
+          <span style={{ width: 24, height: 7, borderRadius: 999, border: `1px solid ${preset.accent_color}88` }} />
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span
+            style={{
+              width: 24,
+              height: 24,
+              borderRadius: 7,
+              border: `1px solid ${preset.accent_color}66`,
+              background: `${preset.accent_color}24`,
+              display: "grid",
+              placeItems: "center",
+              color: preset.accent_color,
+              fontSize: 11,
+              fontWeight: 900,
+            }}
+          >
+            A
+          </span>
+          <span
+            style={{
+              fontSize: 18,
+              fontWeight: 900,
+              lineHeight: 1,
+              fontFamily: CARD_FONTS[preset.font_family].stack,
+              color: preset.text_color,
+            }}
+          >
+            Aa
+          </span>
+        </div>
+
+        <div
+          style={{
+            height: 4,
+            borderRadius: 999,
+            background: `linear-gradient(90deg, ${preset.accent_color}, ${preset.accent_color}22)`,
+          }}
+        />
+      </div>
+    </CardShell>
   );
 }
 

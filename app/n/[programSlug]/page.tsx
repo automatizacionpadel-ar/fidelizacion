@@ -97,22 +97,19 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
   }
 
   const { data: member } = await admin.from("loyalty_members").select("name").eq("id", card.member_id).single();
-  const unit = program.card_type === "stamps" ? "sello" : "punto";
+  const backgroundColor = program.background_color ?? "#20201F";
+  const accentColor = program.accent_color ?? "#7AB619";
 
   return (
-    <div style={{ background: program.background_color ?? "#20201F", minHeight: "100dvh", color: program.text_color ?? "#F0F0EE" }}>
+    <div
+      className="card-page"
+      style={{
+        background: `radial-gradient(120% 78% at 50% -12%, ${accentColor}38, transparent 58%), radial-gradient(85% 65% at 108% 108%, ${accentColor}22, transparent 55%), ${backgroundColor}`,
+        minHeight: "100dvh",
+        color: program.text_color ?? "#F0F0EE",
+      }}
+    >
       <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}>
-        {didEarn ? (
-          <div style={{ background: program.accent_color ?? "#7AB619", color: "#20201F", borderRadius: 14, padding: "16px 18px", textAlign: "center", marginBottom: 16 }}>
-            <p style={{ fontSize: 20, fontWeight: 800, margin: 0 }}>
-              {won > 0 ? "🎉 ¡Ganaste un premio!" : `✅ Sumaste un ${unit}`}
-            </p>
-            <p style={{ fontSize: 14, fontWeight: 700, margin: "4px 0 0", opacity: 0.85 }}>
-              Progreso {balance}/{program.goal}
-            </p>
-          </div>
-        ) : null}
-
         <VirtualCard
           businessName={business?.name ?? ""}
           cardTitle={program.card_title}
@@ -126,15 +123,18 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
           textColor={program.text_color}
           accentColor={program.accent_color}
           logoUrl={program.logo_url}
-          token={card.token}
           stampIcon={program.stamp_icon}
           stampImageUrl={program.stamp_image_url}
           fontFamily={program.font_family}
           template={program.template ?? "moderno"}
+          earnedNow={didEarn ? result.earned ?? 1 : 0}
+          wonNow={won}
         />
 
         <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 16, textAlign: "center" }}>
-          Tu tarjeta en Google Wallet se actualiza sola en unos segundos.
+          {didEarn
+            ? "Tu tarjeta en Google Wallet se actualiza sola en unos segundos."
+            : "Acercá tu celular al punto NFC o escaneá el QR del local para sumar."}
         </p>
       </div>
     </div>

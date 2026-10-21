@@ -2,12 +2,36 @@ import type { CSSProperties, ReactNode } from "react";
 import { cardFontStack, normalizeTemplate } from "@/lib/loyalty/cardDesign";
 
 // Barra de progreso para tarjetas de Puntos (en vez de la grilla de sellos).
-export function CardProgress({ balance, goal, accentColor }: { balance: number; goal: number; accentColor: string }) {
+export function CardProgress({
+  balance,
+  goal,
+  accentColor,
+  animate = false,
+  fromBalance,
+}: {
+  balance: number;
+  goal: number;
+  accentColor: string;
+  animate?: boolean;
+  fromBalance?: number;
+}) {
   const pct = goal > 0 ? Math.min(100, Math.round((balance / goal) * 100)) : 0;
+  const fromPct = goal > 0 ? Math.max(0, Math.min(100, ((fromBalance ?? 0) / goal) * 100)) : 0;
+
   return (
-    <div className="flex items-center gap-2">
-      <div style={{ flex: 1, height: 12, borderRadius: 999, background: "rgba(128,128,128,0.35)", overflow: "hidden" }}>
-        <div style={{ width: `${pct}%`, height: "100%", borderRadius: 999, background: accentColor }} />
+    <div className="card-progress">
+      <div className="card-progress-track">
+        <div
+          className={`card-progress-fill${animate ? " is-animated" : ""}`}
+          style={
+            {
+              width: `${pct}%`,
+              color: accentColor,
+              background: `linear-gradient(90deg, ${accentColor}, ${accentColor}cc)`,
+              "--from-scale": fromPct / 100,
+            } as CSSProperties
+          }
+        />
       </div>
       <span style={{ fontSize: 13, fontWeight: 800, whiteSpace: "nowrap" }}>{pct}%</span>
     </div>
@@ -41,50 +65,67 @@ export function CardShell({
   children,
 }: ShellProps) {
   const t = normalizeTemplate(template);
+  const font = cardFontStack(fontFamily);
+  const baseShadow = shadow ?? "0 24px 60px rgba(0,0,0,0.45)";
 
   const contentStyle: CSSProperties = {
     position: "relative",
-    zIndex: 1,
+    zIndex: 2,
     color: textColor,
-    fontFamily: cardFontStack(fontFamily),
-    borderRadius: radius,
+    fontFamily: font,
     padding,
   };
 
+  const corners = ["tl", "tr", "bl", "br"] as const;
+
   if (t === "clasico") {
-    // Marco dorado doble: borde degradado + línea interior fina.
     return (
       <div
+        className="card-shell card-shell-clasico"
         style={{
-          background: `linear-gradient(135deg, ${accentColor}, ${accentColor}66 45%, ${accentColor} 70%, ${accentColor}99)`,
-          borderRadius: radius + 3,
+          borderRadius: radius + 5,
           padding: 2,
-          boxShadow: shadow ?? "0 8px 32px rgba(0,0,0,0.45)",
+          background: `linear-gradient(135deg, ${accentColor}, ${accentColor}55 28%, ${accentColor} 52%, ${accentColor}44 76%, ${accentColor})`,
+          boxShadow: `${baseShadow}, 0 0 0 1px ${accentColor}33, inset 0 0 30px ${accentColor}18`,
         }}
       >
         <div
           style={{
-            background: backgroundColor,
-            borderRadius: radius + 1,
+            position: "relative",
+            overflow: "hidden",
+            borderRadius: radius + 3,
             padding: 2,
+            background: backgroundColor,
           }}
         >
           <div
             style={{
-              ...contentStyle,
-              background: backgroundColor,
+              position: "relative",
+              overflow: "hidden",
+              borderRadius: radius + 1,
+              background: `radial-gradient(120% 90% at 50% -20%, ${accentColor}24, transparent 55%), linear-gradient(165deg, ${backgroundColor}, ${backgroundColor} 60%, ${accentColor}0d)`,
               border: `1px solid ${accentColor}55`,
+              color: textColor,
+              fontFamily: font,
             }}
           >
-            <div
-              style={{
-                height: 2,
-                background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)`,
-                borderRadius: 2,
-                marginBottom: 12,
-              }}
-            />
-            {children}
+            <div className="card-orb card-orb-a" style={{ width: 190, height: 190, top: -90, right: -70, background: accentColor, opacity: 0.16 }} />
+            <div className="card-sheen" style={{ animationDuration: "9s" }} />
+            {corners.map((c) => (
+              <span key={c} className={`card-corner card-corner-${c}`} style={{ borderColor: accentColor }} />
+            ))}
+            <div style={{ ...contentStyle, padding }}>
+              <div
+                style={{
+                  height: 2,
+                  background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)`,
+                  borderRadius: 2,
+                  marginBottom: 16,
+                  boxShadow: `0 0 14px ${accentColor}66`,
+                }}
+              />
+              {children}
+            </div>
           </div>
         </div>
       </div>
@@ -92,91 +133,79 @@ export function CardShell({
   }
 
   if (t === "glass") {
-    // Glassmorphism: fondo con degradado + manchas de color difuminadas
-    // y panel translúcido con blur encima.
     return (
       <div
+        className="card-shell card-shell-glass"
         style={{
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: radius,
-          background: `linear-gradient(135deg, ${accentColor}44, ${backgroundColor} 55%, #7c3aed33)`,
-          border: "1px solid rgba(255,255,255,0.25)",
-          boxShadow: shadow ?? "0 8px 32px rgba(0,0,0,0.45)",
+          borderRadius: radius + 2,
+          background: `linear-gradient(145deg, ${accentColor}55, ${backgroundColor} 48%, #7c3aed33)`,
+          border: "1px solid rgba(255,255,255,0.26)",
+          boxShadow: `${baseShadow}, inset 0 1px 0 rgba(255,255,255,0.3)`,
+          color: textColor,
+          fontFamily: font,
         }}
       >
+        <div className="card-orb card-orb-a" style={{ width: 220, height: 220, right: -80, top: -90, background: accentColor, opacity: 0.5, filter: "blur(48px)" }} />
+        <div className="card-orb card-orb-b" style={{ width: 180, height: 180, left: -70, bottom: -80, background: "#7c3aed", opacity: 0.35, filter: "blur(46px)" }} />
+        <div className="card-grid" style={{ opacity: 0.18 }} />
         <div
-          style={{
-            position: "absolute",
-            width: 180,
-            height: 180,
-            right: -50,
-            top: -60,
-            borderRadius: "50%",
-            background: accentColor,
-            opacity: 0.35,
-            filter: "blur(50px)",
-          }}
-        />
-        <div
-          style={{
-            position: "absolute",
-            width: 160,
-            height: 160,
-            left: -50,
-            bottom: -60,
-            borderRadius: "50%",
-            background: "#7c3aed",
-            opacity: 0.3,
-            filter: "blur(50px)",
-          }}
-        />
-        <div
+          className="card-glass-panel"
           style={{
             ...contentStyle,
-            background: "rgba(255,255,255,0.08)",
-            backdropFilter: "blur(14px)",
-            WebkitBackdropFilter: "blur(14px)",
-            border: "1px solid rgba(255,255,255,0.22)",
             margin: 10,
+            borderRadius: radius,
+            background: "rgba(255,255,255,0.09)",
+            border: "1px solid rgba(255,255,255,0.22)",
+            boxShadow: "inset 0 1px 0 rgba(255,255,255,0.18)",
           }}
         >
           {children}
         </div>
+        <div className="card-sheen" style={{ animationDuration: "11s" }} />
       </div>
     );
   }
 
   if (t === "futurista") {
-    // Neón: borde y resplandor del color de acento + barra diagonal.
     return (
       <div
+        className="card-shell card-shell-futurista"
         style={{
-          position: "relative",
-          overflow: "hidden",
-          borderRadius: radius,
+          borderRadius: radius + 2,
           background: backgroundColor,
           color: textColor,
-          fontFamily: cardFontStack(fontFamily),
-          border: `1px solid ${accentColor}`,
-          boxShadow: `0 0 22px ${accentColor}55, inset 0 0 28px ${accentColor}14, ${shadow ?? "0 8px 32px rgba(0,0,0,0.45)"}`,
-          padding,
+          fontFamily: font,
+          border: `1px solid ${accentColor}bb`,
+          boxShadow: `0 0 0 1px ${accentColor}22, 0 0 30px ${accentColor}44, inset 0 0 40px ${accentColor}10, ${baseShadow}`,
         }}
       >
         <div
+          className="card-grid"
+          style={{
+            backgroundImage: `linear-gradient(${accentColor}22 1px, transparent 1px), linear-gradient(90deg, ${accentColor}22 1px, transparent 1px)`,
+            opacity: 0.5,
+          }}
+        />
+        <div className="card-scanlines" />
+        <div
+          className="card-orb card-orb-a"
+          style={{ width: 210, height: 100, top: -50, right: -45, background: accentColor, opacity: 0.35, filter: "blur(36px)", transform: "rotate(-22deg)" }}
+        />
+        <div
           style={{
             position: "absolute",
-            top: -30,
+            top: -32,
             right: -30,
-            width: 140,
-            height: 60,
-            background: `linear-gradient(90deg, transparent, ${accentColor}66)`,
+            width: 150,
+            height: 58,
+            background: `linear-gradient(90deg, transparent, ${accentColor}77)`,
             transform: "rotate(25deg)",
           }}
         />
-        <div style={{ position: "relative", zIndex: 1, color: "inherit", fontFamily: "inherit" }}>
-          {children}
-        </div>
+        {corners.map((c) => (
+          <span key={c} className={`card-hud-corner card-hud-corner-${c}`} style={{ borderColor: accentColor }} />
+        ))}
+        <div style={contentStyle}>{children}</div>
         <div
           style={{
             position: "absolute",
@@ -185,35 +214,40 @@ export function CardShell({
             right: 0,
             height: 3,
             background: `linear-gradient(90deg, transparent, ${accentColor}, transparent)`,
-            boxShadow: `0 0 12px ${accentColor}`,
+            boxShadow: `0 0 16px ${accentColor}`,
           }}
         />
       </div>
     );
   }
 
-  // Moderno: limpio, sólido, con barra superior de acento.
+  // Moderno: gradiente profundo, luz ambiental y brillo que recorre la tarjeta.
   return (
     <div
+      className="card-shell card-shell-modern"
       style={{
-        background: backgroundColor,
-        color: textColor,
-        fontFamily: cardFontStack(fontFamily),
-        border: "1px solid #3D3D3B",
-        borderRadius: radius,
-        padding,
-        boxShadow: shadow,
-        overflow: "hidden",
+        borderRadius: radius + 2,
+        padding: 1,
+        background: `linear-gradient(155deg, ${accentColor}bb, ${accentColor}22 32%, rgba(255,255,255,0.1) 58%, ${accentColor}55)`,
+        boxShadow: `${baseShadow}, 0 0 0 1px rgba(255,255,255,0.06)`,
       }}
     >
       <div
         style={{
-          height: 4,
-          margin: `-${padding}px -${padding}px 12px`,
-          background: `linear-gradient(90deg, ${accentColor}, ${accentColor}55)`,
+          position: "relative",
+          overflow: "hidden",
+          borderRadius: radius,
+          background: `linear-gradient(155deg, ${backgroundColor} 0%, ${backgroundColor} 52%, ${accentColor}18 100%)`,
+          color: textColor,
+          fontFamily: font,
         }}
-      />
-      {children}
+      >
+        <div className="card-orb card-orb-a" style={{ width: 190, height: 190, top: -95, right: -55, background: accentColor, opacity: 0.28 }} />
+        <div className="card-orb card-orb-b" style={{ width: 150, height: 150, bottom: -85, left: -60, background: accentColor, opacity: 0.14 }} />
+        <div className="card-grid" style={{ opacity: 0.08 }} />
+        <div className="card-sheen" />
+        <div style={contentStyle}>{children}</div>
+      </div>
     </div>
   );
 }

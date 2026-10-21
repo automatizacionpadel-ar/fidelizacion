@@ -32,3 +32,1006 @@ body {
   color: var(--text-muted);
   opacity: 1;
 }
+
+/* ============================================================
+   Tarjeta digital pública
+   ============================================================ */
+
+.card-shell {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.45s ease;
+}
+
+.card-shell::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.045;
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.65'/%3E%3C/svg%3E");
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-shell:hover {
+    transform: translateY(-3px);
+  }
+  .card-shell:hover .card-logo-img {
+    transform: scale(1.06);
+  }
+}
+
+.card-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(34px);
+  pointer-events: none;
+}
+
+.card-orb-a {
+  animation: cardOrbFloat 9s ease-in-out infinite alternate;
+}
+
+.card-orb-b {
+  animation: cardOrbFloat 12s ease-in-out infinite alternate-reverse;
+}
+
+@keyframes cardOrbFloat {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(16px, -22px, 0) scale(1.14);
+  }
+}
+
+.card-sheen {
+  position: absolute;
+  inset: -70% -25%;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    112deg,
+    transparent 34%,
+    rgba(255, 255, 255, 0.16) 47%,
+    rgba(255, 255, 255, 0.03) 53%,
+    transparent 64%
+  );
+  transform: translateX(-75%) rotate(7deg);
+  animation: cardSheen 8s ease-in-out infinite;
+}
+
+@keyframes cardSheen {
+  0%,
+  62% {
+    transform: translateX(-75%) rotate(7deg);
+  }
+  88%,
+  100% {
+    transform: translateX(75%) rotate(7deg);
+  }
+}
+
+.card-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 26px 26px;
+  mask-image: radial-gradient(circle at 50% 30%, #000 0%, transparent 78%);
+}
+
+.card-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.18;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 3px,
+    rgba(255, 255, 255, 0.1) 4px
+  );
+}
+
+.card-corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.7;
+}
+
+.card-corner-tl {
+  top: 10px;
+  left: 10px;
+  border-top: 1px solid;
+  border-left: 1px solid;
+}
+
+.card-corner-tr {
+  top: 10px;
+  right: 10px;
+  border-top: 1px solid;
+  border-right: 1px solid;
+}
+
+.card-corner-bl {
+  bottom: 10px;
+  left: 10px;
+  border-bottom: 1px solid;
+  border-left: 1px solid;
+}
+
+.card-corner-br {
+  bottom: 10px;
+  right: 10px;
+  border-bottom: 1px solid;
+  border-right: 1px solid;
+}
+
+.card-hud-corner {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.card-hud-corner-tl {
+  top: 9px;
+  left: 9px;
+  border-top: 2px solid;
+  border-left: 2px solid;
+}
+
+.card-hud-corner-tr {
+  top: 9px;
+  right: 9px;
+  border-top: 2px solid;
+  border-right: 2px solid;
+}
+
+.card-hud-corner-bl {
+  bottom: 9px;
+  left: 9px;
+  border-bottom: 2px solid;
+  border-left: 2px solid;
+}
+
+.card-hud-corner-br {
+  bottom: 9px;
+  right: 9px;
+  border-bottom: 2px solid;
+  border-right: 2px solid;
+}
+
+.card-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.card-brand {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  opacity: 0.78;
+}
+
+.card-brand-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-brand-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.card-type-pill {
+  flex-shrink: 0;
+  border: 1px solid;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+}
+
+.card-hero {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.card-logo-frame {
+  width: 78px;
+  height: 78px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  padding: 10px;
+  border: 1px solid;
+  border-radius: 22px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.14);
+}
+
+.card-logo-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+  transition: transform 0.45s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.card-logo-letter {
+  font-size: 38px;
+  line-height: 1;
+  font-weight: 900;
+}
+
+.card-heading {
+  min-width: 0;
+}
+
+.card-eyebrow {
+  margin: 0 0 4px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 2.2px;
+}
+
+.card-title {
+  margin: 0;
+  font-size: clamp(22px, 6.6vw, 29px);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.02em;
+  overflow-wrap: anywhere;
+}
+
+.card-member {
+  margin: 5px 0 0;
+  font-size: 12px;
+  font-weight: 600;
+  opacity: 0.62;
+}
+
+.card-reward {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  padding: 15px 16px 15px 14px;
+  border: 1.5px solid;
+  border-radius: 17px;
+  overflow: hidden;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+.card-reward::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    112deg,
+    transparent 24%,
+    rgba(255, 255, 255, 0.17) 46%,
+    rgba(255, 255, 255, 0.02) 54%,
+    transparent 72%
+  );
+  transform: translateX(-135%);
+  animation: rewardSheen 5.5s ease-in-out infinite;
+}
+
+@keyframes rewardSheen {
+  0%,
+  58% {
+    transform: translateX(-135%);
+  }
+  88%,
+  100% {
+    transform: translateX(135%);
+  }
+}
+
+.card-reward-medal {
+  position: relative;
+  z-index: 1;
+  width: 49px;
+  height: 49px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid;
+  border-radius: 16px;
+}
+
+.card-reward-icon {
+  display: grid;
+  place-items: center;
+  font-size: 27px;
+  line-height: 1;
+  filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.32));
+  animation: giftTilt 4.5s ease-in-out infinite;
+}
+
+@keyframes giftTilt {
+  0%,
+  100% {
+    transform: rotate(-4deg) scale(1);
+  }
+  50% {
+    transform: rotate(4deg) scale(1.07);
+  }
+}
+
+.card-reward-copy {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  min-width: 0;
+}
+
+.card-reward-kicker {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.card-reward-label {
+  margin: 0;
+  flex-shrink: 0;
+  font-size: 9.5px;
+  font-weight: 900;
+  letter-spacing: 2.1px;
+}
+
+.card-reward-rule {
+  flex: 1;
+  height: 1px;
+  border-radius: 1px;
+  opacity: 0.6;
+}
+
+.card-reward-text {
+  margin: 4px 0 0;
+  font-size: 19px;
+  font-weight: 900;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+  text-wrap: balance;
+}
+
+.card-reward-hint {
+  margin: 5px 0 0;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  opacity: 0.48;
+}
+
+.card-reward-spark {
+  position: absolute;
+  top: 9px;
+  right: 12px;
+  z-index: 1;
+  font-size: 12px;
+  opacity: 0.85;
+  animation: sparkTwinkle 1.9s ease-in-out infinite;
+}
+
+.card-progress-block {
+  margin-top: 18px;
+}
+
+.card-count-row {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.card-count {
+  font-size: 40px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+.card-goal {
+  font-size: 18px;
+  font-weight: 800;
+  opacity: 0.48;
+}
+
+.card-unit {
+  display: block;
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1.9px;
+  opacity: 0.55;
+}
+
+.card-remaining {
+  margin-bottom: 3px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.card-progress-body {
+  margin-top: 13px;
+}
+
+.card-stamp-grid {
+  display: grid;
+  gap: 9px;
+  width: 100%;
+  max-width: 340px;
+  margin: 0 auto;
+  align-items: center;
+  justify-items: center;
+}
+
+.card-stamp-cell {
+  width: 100%;
+  min-height: 45px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed rgba(255, 255, 255, 0.13);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease;
+}
+
+.card-stamp-cell.is-earned {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--stamp-accent, #7ab619) 38%, transparent);
+  background: color-mix(in srgb, var(--stamp-accent, #7ab619) 13%, transparent);
+}
+
+.card-stamp-more {
+  grid-column: 1 / -1;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.65;
+  padding-top: 2px;
+}
+
+.stamp-new-wrap {
+  position: relative;
+  display: inline-flex;
+  animation: stampPop 0.72s cubic-bezier(0.2, 0.9, 0.25, 1.25) both;
+}
+
+.stamp-new-wrap::before {
+  content: "";
+  position: absolute;
+  inset: -9px;
+  border-radius: 999px;
+  border: 2px solid var(--stamp-accent, #7ab619);
+  pointer-events: none;
+  animation: stampRing 1s ease-out 0.08s both;
+}
+
+@keyframes stampPop {
+  0% {
+    transform: scale(0.2) rotate(-16deg);
+    opacity: 0;
+    filter: blur(3px);
+  }
+  55% {
+    transform: scale(1.28) rotate(5deg);
+    opacity: 1;
+    filter: blur(0);
+  }
+  76% {
+    transform: scale(0.93) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0);
+  }
+}
+
+@keyframes stampRing {
+  from {
+    transform: scale(0.55);
+    opacity: 0.9;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+
+.card-progress {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.card-progress-track {
+  position: relative;
+  flex: 1;
+  height: 13px;
+  border-radius: 999px;
+  background: rgba(128, 128, 128, 0.3);
+  overflow: hidden;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.card-progress-fill {
+  position: relative;
+  height: 100%;
+  border-radius: 999px;
+  transform-origin: left center;
+  overflow: hidden;
+  box-shadow: 0 0 18px currentColor;
+}
+
+.card-progress-fill.is-animated {
+  animation: progressGrow 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.card-progress-fill::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.5) 50%,
+    transparent 70%
+  );
+  transform: translateX(-120%);
+  animation: progressShine 2.6s ease-in-out infinite;
+}
+
+@keyframes progressGrow {
+  from {
+    transform: scaleX(var(--from-scale, 0));
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes progressShine {
+  0%,
+  55% {
+    transform: translateX(-120%);
+  }
+  85%,
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+.card-rewards-banner {
+  margin-top: 14px;
+  padding: 11px 14px;
+  border-radius: 12px;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 900;
+  animation: rewardBanner 3.2s linear infinite;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.22);
+}
+
+@keyframes rewardBanner {
+  0% {
+    background-position: 0% 50%;
+  }
+  100% {
+    background-position: 220% 50%;
+  }
+}
+
+.card-earned-toast {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 13px;
+  padding: 9px 12px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 800;
+  animation: toastIn 0.55s cubic-bezier(0.2, 0.9, 0.25, 1.2) both;
+}
+
+.card-earned-plus {
+  display: inline-grid;
+  place-items: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: currentColor;
+  color: #171717;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(128, 128, 128, 0.24);
+}
+
+.card-member-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  font-size: 12px;
+  font-weight: 700;
+  opacity: 0.82;
+}
+
+.card-member-avatar {
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.card-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1.4px;
+  opacity: 0.72;
+}
+
+.card-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  animation: livePulse 2.2s ease-in-out infinite;
+}
+
+@keyframes livePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.55;
+    transform: scale(0.8);
+  }
+}
+
+/* ============================================================
+   Celebración de premio
+   ============================================================ */
+
+.celebration-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: 22px;
+  background: radial-gradient(circle at 50% 40%, rgba(255, 255, 255, 0.08), rgba(6, 6, 6, 0.86) 62%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  animation: celebrationFade 0.35s ease both;
+}
+
+@keyframes celebrationFade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.celebration-card {
+  position: relative;
+  width: min(92vw, 390px);
+  max-height: 88dvh;
+  overflow: auto;
+  padding: 28px 22px 24px;
+  border: 1px solid;
+  border-radius: 28px;
+  color: #f7f7f4;
+  text-align: center;
+  animation: celebrationIn 0.68s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes celebrationIn {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.celebration-glow {
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  top: -130px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-radius: 50%;
+  filter: blur(55px);
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.celebration-badge {
+  position: relative;
+  width: 94px;
+  height: 94px;
+  margin: 0 auto 18px;
+  display: grid;
+  place-items: center;
+  border: 1px solid;
+  border-radius: 50%;
+  animation: trophyFloat 3.4s ease-in-out infinite;
+}
+
+@keyframes trophyFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-2deg);
+  }
+  50% {
+    transform: translateY(-7px) rotate(2deg);
+  }
+}
+
+.celebration-trophy {
+  font-size: 48px;
+  line-height: 1;
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.4));
+}
+
+.celebration-spark {
+  position: absolute;
+  font-size: 13px;
+  animation: sparkTwinkle 1.9s ease-in-out infinite;
+}
+
+.celebration-spark-1 {
+  top: 2px;
+  right: 4px;
+}
+
+.celebration-spark-2 {
+  bottom: 8px;
+  left: -4px;
+  animation-delay: 0.4s;
+}
+
+.celebration-spark-3 {
+  top: 14px;
+  left: -12px;
+  animation-delay: 0.8s;
+}
+
+@keyframes sparkTwinkle {
+  0%,
+  100% {
+    opacity: 0.35;
+    transform: scale(0.75) rotate(0deg);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.18) rotate(18deg);
+  }
+}
+
+.celebration-eyebrow {
+  margin: 0 0 7px;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 2.4px;
+}
+
+.celebration-title {
+  margin: 0;
+  font-size: clamp(25px, 7vw, 32px);
+  font-weight: 900;
+  line-height: 1.08;
+  letter-spacing: -0.03em;
+}
+
+.celebration-subtitle {
+  margin: 10px 0 14px;
+  font-size: 13px;
+  opacity: 0.68;
+}
+
+.celebration-reward {
+  padding: 14px 16px;
+  border: 1px solid;
+  border-radius: 16px;
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+  animation: rewardReveal 0.7s 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes rewardReveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.celebration-count {
+  margin: 14px 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.85;
+}
+
+.celebration-button {
+  width: 100%;
+  min-height: 50px;
+  border: none;
+  border-radius: 14px;
+  color: #171717;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.28);
+  transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+.celebration-button:hover {
+  filter: brightness(1.05);
+}
+
+.celebration-button:active {
+  transform: scale(0.98);
+}
+
+.celebration-hint {
+  margin: 12px 0 0;
+  font-size: 11px;
+  opacity: 0.5;
+}
+
+.confetti-layer {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  opacity: 0;
+  animation-name: confettiFall;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes confettiFall {
+  0% {
+    opacity: 0;
+    transform: translate3d(0, -20px, 0) rotate(0deg);
+  }
+  8% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0.15;
+    transform: translate3d(var(--drift, 20px), 108vh, 0) rotate(620deg);
+  }
+}
+
+/* ============================================================
+   Movimiento reducido
+   ============================================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .card-orb,
+  .card-sheen,
+  .card-progress-fill,
+  .card-progress-fill::after,
+  .card-reward::before,
+  .card-reward-icon,
+  .card-reward-spark,
+  .card-rewards-banner,
+  .card-earned-toast,
+  .stamp-new-wrap,
+  .stamp-new-wrap::before,
+  .card-live-dot,
+  .celebration-overlay,
+  .celebration-card,
+  .celebration-badge,
+  .celebration-spark,
+  .celebration-reward,
+  .confetti-piece {
+    animation: none !important;
+  }
+}
+
+.card-page {
+  position: relative;
+  overflow-x: hidden;
+}
+
+.card-page::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)' opacity='.7'/%3E%3C/svg%3E");
+}
+
+.card-page > * {
+  position: relative;
+  z-index: 1;
+}

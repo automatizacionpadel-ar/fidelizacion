@@ -17,9 +17,18 @@ export default async function CardPage({ params }: { params: Promise<{ token: st
   const { data: business } = await admin.from("businesses").select("name,status").eq("id", card.business_id).single();
   if (!program) notFound();
   const suspended = business?.status === "suspended";
+  const backgroundColor = program.background_color ?? "#20201F";
+  const accentColor = program.accent_color ?? "#7AB619";
 
   return (
-    <div style={{ background: "#20201F", minHeight: "100dvh", color: "#F0F0EE" }}>
+    <div
+      className="card-page"
+      style={{
+        background: `radial-gradient(120% 78% at 50% -12%, ${accentColor}38, transparent 58%), radial-gradient(85% 65% at 108% 108%, ${accentColor}22, transparent 55%), ${backgroundColor}`,
+        minHeight: "100dvh",
+        color: program.text_color ?? "#F0F0EE",
+      }}
+    >
       <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(20px, env(safe-area-inset-top))", paddingBottom: "max(32px, env(safe-area-inset-bottom))" }}>
         {suspended ? <SuspensionBanner reason="El negocio está suspendido temporalmente." /> : null}
         <VirtualCard
@@ -35,7 +44,6 @@ export default async function CardPage({ params }: { params: Promise<{ token: st
           textColor={program.text_color}
           accentColor={program.accent_color}
           logoUrl={program.logo_url}
-          token={token}
           stampIcon={program.stamp_icon}
           stampImageUrl={program.stamp_image_url}
           fontFamily={program.font_family}
