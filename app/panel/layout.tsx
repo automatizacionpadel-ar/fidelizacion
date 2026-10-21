@@ -4,6 +4,7 @@ import { resolveProfile } from "@/lib/auth/roles";
 import { Sidebar } from "@/components/panel/Sidebar";
 import { MobileNav } from "@/components/panel/MobileNav";
 import { SuspensionBanner } from "@/components/panel/SuspensionBanner";
+import { planHasBranches } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -23,7 +24,7 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
   const { data: business } = await supabase
     .from("businesses")
-    .select("status,suspended_reason")
+    .select("status,suspended_reason,plan")
     .eq("owner_user_id", user.id)
     .order("created_at", { ascending: true })
     .limit(1)
@@ -38,11 +39,11 @@ export default async function PanelLayout({ children }: { children: React.ReactN
 
   return (
     <div style={{ background: "#20201F", minHeight: "100vh", color: "#F0F0EE", display: "flex" }}>
-      <Sidebar signOut={signOut} />
+      <Sidebar signOut={signOut} showBranches={planHasBranches(business?.plan)} />
 
       {/* Contenido + header móvil */}
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column" }}>
-        <MobileNav signOut={signOut} />
+        <MobileNav signOut={signOut} showBranches={planHasBranches(business?.plan)} />
         <main className="w-[92%] mx-auto" style={{ maxWidth: 1100, paddingTop: 20, paddingBottom: "max(48px, env(safe-area-inset-bottom))" }}>
           {business?.status === "suspended" ? (
             <SuspensionBanner reason={business.suspended_reason} />

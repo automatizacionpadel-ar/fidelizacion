@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BranchesManager } from "@/components/loyalty/BranchesManager";
+import { planHasBranches } from "@/lib/billing";
 
 export const dynamic = "force-dynamic";
 
@@ -8,8 +9,9 @@ export default async function SucursalesPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-  const { data: business } = await supabase.from("businesses").select("id").eq("owner_user_id", user.id).maybeSingle();
+  const { data: business } = await supabase.from("businesses").select("id,plan").eq("owner_user_id", user.id).maybeSingle();
   if (!business) redirect("/panel");
+  if (!planHasBranches(business.plan)) redirect("/panel");
 
   return (
     <div>

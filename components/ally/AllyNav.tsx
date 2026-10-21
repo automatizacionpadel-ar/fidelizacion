@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { DashboardIcon, LogoutIcon, StoreIcon, UsersIcon } from "@/components/panel/icons";
 
@@ -21,9 +22,15 @@ export function AllySidebar({ signOut }: { signOut: () => Promise<void> }) {
 
   return (
     <aside className="hidden md:flex" style={{ width: 248, flexShrink: 0, height: "100vh", position: "sticky", top: 0, flexDirection: "column", background: "#2A2A29", borderRight: "1px solid #3D3D3B", padding: "20px 16px" }}>
-      <Link href="/aliado" style={{ fontWeight: 800, fontSize: 16, padding: "4px 8px", display: "flex", alignItems: "center" }}>
-        <span style={{ background: "#7AB619", color: "#20201F", borderRadius: 8, padding: "2px 8px", marginRight: 8 }}>A</span>
-        Portal aliados
+      <Link href="/aliado" title="Simplificia" style={{ padding: "4px 8px", display: "flex", alignItems: "center" }}>
+        <Image
+          src="/logo.png"
+          alt="Simplificia"
+          width={174}
+          height={30}
+          loading="eager"
+          style={{ width: 174, height: "auto" }}
+        />
       </Link>
 
       <nav className="flex flex-col gap-1" style={{ marginTop: 24, fontSize: 14 }}>
@@ -58,9 +65,15 @@ export function AllyMobileNav({ signOut }: { signOut: () => Promise<void> }) {
   return (
     <header className="md:hidden" style={{ borderBottom: "1px solid #3D3D3B", background: "#2A2A29", paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="w-[92%] mx-auto flex items-center justify-between" style={{ paddingTop: 8, paddingBottom: 8 }}>
-        <Link href="/aliado" style={{ fontWeight: 800, fontSize: 16 }}>
-          <span style={{ background: "#7AB619", color: "#20201F", borderRadius: 8, padding: "2px 8px", marginRight: 8 }}>A</span>
-          Portal aliados
+        <Link href="/aliado" title="Simplificia" aria-label="Simplificia">
+          <Image
+            src="/logo.png"
+            alt="Simplificia"
+            width={150}
+            height={26}
+            loading="eager"
+            style={{ width: 150, height: "auto" }}
+          />
         </Link>
         <button type="button" onClick={() => setOpen((v) => !v)} aria-label={open ? "Cerrar menú" : "Abrir menú"} aria-expanded={open} style={{ width: 44, height: 44, borderRadius: 10, border: "1px solid #3D3D3B", background: open ? "#3D3D3B" : "transparent", color: "#F0F0EE", fontSize: 20, cursor: "pointer" }}>
           {open ? "×" : "☰"}

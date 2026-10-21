@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BanknoteIcon,
@@ -25,7 +26,7 @@ const LINKS = [
 
 // Header móvil con hamburguesa: logo + botón, y panel desplegable
 // con los links en vertical. Solo se muestra en <md (el sidebar cubre desktop).
-export function MobileNav({ signOut }: { signOut: () => Promise<void> }) {
+export function MobileNav({ signOut, showBranches }: { signOut: () => Promise<void>; showBranches: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
@@ -45,9 +46,15 @@ export function MobileNav({ signOut }: { signOut: () => Promise<void> }) {
   return (
     <header className="md:hidden" style={{ borderBottom: "1px solid #3D3D3B", background: "#2A2A29", paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="w-[92%] mx-auto flex items-center justify-between" style={{ paddingTop: 8, paddingBottom: 8 }}>
-        <Link href="/panel" style={{ fontWeight: 800, fontSize: 17 }}>
-          <span style={{ background: "#7AB619", color: "#20201F", borderRadius: 8, padding: "2px 8px", marginRight: 8 }}>F</span>
-          Fidelización
+        <Link href="/panel" title="Simplificia" aria-label="Simplificia">
+          <Image
+            src="/logo.png"
+            alt="Simplificia"
+            width={150}
+            height={26}
+            loading="eager"
+            style={{ width: 150, height: "auto" }}
+          />
         </Link>
         <button
           type="button"
@@ -77,7 +84,7 @@ export function MobileNav({ signOut }: { signOut: () => Promise<void> }) {
       {open && (
         <nav aria-label="Navegación del panel" style={{ borderTop: "1px solid #3D3D3B", maxHeight: "70vh", overflowY: "auto" }}>
           <div className="w-[92%] mx-auto flex flex-col" style={{ paddingTop: 8, paddingBottom: 12 }}>
-            {LINKS.map((l) => {
+            {LINKS.filter((l) => l.href !== "/panel/sucursales" || showBranches).map((l) => {
               const active = l.exact ? pathname === l.href : pathname === l.href || pathname.startsWith(l.href + "/");
               return (
                 <Link

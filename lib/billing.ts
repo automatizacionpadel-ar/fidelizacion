@@ -17,6 +17,13 @@ export function planPrice(p: string | null | undefined): number {
   return PLANS[normalizePlan(p)].price;
 }
 
+// Planes que incluyen gestión de sucursales. El plan Empresas se agrega acá.
+export const PLANS_WITH_BRANCHES: PlanId[] = [];
+
+export function planHasBranches(p: string | null | undefined): boolean {
+  return PLANS_WITH_BRANCHES.includes(normalizePlan(p));
+}
+
 // Límites de tarjetas de fidelización por plan.
 export const CARD_LIMITS: Record<PlanId, { total: number; active: number }> = {
   base: { total: 3, active: 1 },

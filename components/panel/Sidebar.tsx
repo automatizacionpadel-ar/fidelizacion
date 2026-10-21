@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BanknoteIcon,
@@ -27,7 +28,7 @@ const LINKS = [
 
 const STORAGE_KEY = "panel-sidebar-collapsed";
 
-export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
+export function Sidebar({ signOut, showBranches }: { signOut: () => Promise<void>; showBranches: boolean }) {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
@@ -82,28 +83,26 @@ export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
       >
         <Link
           href="/panel"
-          title="Fidelización"
+          title="Simplificia"
           style={{
-            fontWeight: 800,
-            fontSize: 17,
             padding: "4px 8px",
             display: "flex",
             alignItems: "center",
             minWidth: 0,
           }}
         >
-          <span
-            style={{
-              background: "#7AB619",
-              color: "#20201F",
-              borderRadius: 8,
-              padding: "2px 8px",
-              marginRight: collapsed ? 0 : 8,
-            }}
-          >
-            F
-          </span>
-          {!collapsed && <span style={{ whiteSpace: "nowrap" }}>Fidelización</span>}
+          <Image
+            src="/logo.png"
+            alt="Simplificia"
+            width={collapsed ? 36 : 174}
+            height={collapsed ? 36 : 30}
+            loading="eager"
+            style={
+              collapsed
+                ? { width: 36, height: 36, objectFit: "cover", objectPosition: "left center" }
+                : { width: 174, height: "auto" }
+            }
+          />
         </Link>
         {!collapsed && (
           <button
@@ -151,7 +150,7 @@ export function Sidebar({ signOut }: { signOut: () => Promise<void> }) {
       )}
 
       <nav className="flex flex-col gap-1" style={{ marginTop: 24, fontSize: 14 }}>
-        {LINKS.map((l) => {
+        {LINKS.filter((l) => l.href !== "/panel/sucursales" || showBranches).map((l) => {
           const active = isActive(l.href, l.exact);
           const Icon = l.icon;
           return (

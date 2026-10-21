@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
   BanknoteIcon,
@@ -67,9 +68,19 @@ export function AdminSidebar({ signOut }: { signOut: () => Promise<void> }) {
       }}
     >
       <div style={{ display: "flex", alignItems: "center", justifyContent: collapsed ? "center" : "space-between", gap: 8 }}>
-        <Link href="/admin" title="Administración" style={{ fontWeight: 800, fontSize: 16, padding: "4px 8px", display: "flex", alignItems: "center", minWidth: 0 }}>
-          <span style={{ background: "#F0F0EE", color: "#20201F", borderRadius: 8, padding: "2px 8px", marginRight: collapsed ? 0 : 8 }}>A</span>
-          {!collapsed && <span style={{ whiteSpace: "nowrap" }}>Administración</span>}
+        <Link href="/admin" title="Simplificia" style={{ padding: "4px 8px", display: "flex", alignItems: "center", minWidth: 0 }}>
+          <Image
+            src="/logo.png"
+            alt="Simplificia"
+            width={collapsed ? 36 : 174}
+            height={collapsed ? 36 : 30}
+            loading="eager"
+            style={
+              collapsed
+                ? { width: 36, height: 36, objectFit: "cover", objectPosition: "left center" }
+                : { width: 174, height: "auto" }
+            }
+          />
         </Link>
         {!collapsed && (
           <button type="button" onClick={toggle} aria-label="Colapsar menú" style={{ color: "#9A9A96", background: "none", border: "1px solid #3D3D3B", borderRadius: 8, cursor: "pointer", padding: 6, display: "flex" }}>
@@ -138,9 +149,15 @@ export function AdminMobileNav({ signOut }: { signOut: () => Promise<void> }) {
   return (
     <header className="md:hidden" style={{ borderBottom: "1px solid #3D3D3B", background: "#2A2A29", paddingTop: "env(safe-area-inset-top, 0px)" }}>
       <div className="w-[92%] mx-auto flex items-center justify-between" style={{ paddingTop: 8, paddingBottom: 8 }}>
-        <Link href="/admin" style={{ fontWeight: 800, fontSize: 16 }}>
-          <span style={{ background: "#F0F0EE", color: "#20201F", borderRadius: 8, padding: "2px 8px", marginRight: 8 }}>A</span>
-          Administración
+        <Link href="/admin" title="Simplificia" aria-label="Simplificia">
+          <Image
+            src="/logo.png"
+            alt="Simplificia"
+            width={150}
+            height={26}
+            loading="eager"
+            style={{ width: 150, height: "auto" }}
+          />
         </Link>
         <button
           type="button"
