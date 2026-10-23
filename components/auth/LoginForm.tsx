@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -35,25 +36,15 @@ export function LoginForm() {
   return (
     <div style={{ background: "#20201F", minHeight: "100vh" }}>
       <div className="w-[90%] mx-auto" style={{ maxWidth: 480, paddingTop: 64, paddingBottom: 64 }}>
-        <div className="flex items-center gap-2" style={{ marginBottom: 32 }}>
-          <div
-            style={{
-              width: 32,
-              height: 32,
-              borderRadius: 9,
-              background: "#7AB619",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontWeight: 800,
-              color: "#20201F",
-            }}
-          >
-            F
-          </div>
-          <span style={{ fontWeight: 800, fontSize: 18, color: "#F0F0EE" }}>
-            Fidelización
-          </span>
+        <div style={{ marginBottom: 32 }}>
+          <Image
+            src="/logo.png"
+            alt="Simplificia"
+            width={174}
+            height={30}
+            priority
+            style={{ width: 174, height: "auto" }}
+          />
         </div>
 
         <h1 style={{ fontSize: 28, fontWeight: 800 }}>Hola de nuevo 👋</h1>
