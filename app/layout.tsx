@@ -9,9 +9,9 @@ const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "700", "800"
 const playfair = Playfair_Display({ subsets: ["latin"], weight: ["700", "800"], variable: "--font-playfair" });
 
 export const metadata: Metadata = {
-  title: "Fidelización — Tarjetas digitales para tu negocio",
+  title: "Fidelización — Ingresar",
   description:
-    "Creá tu tarjeta de sellos o puntos, compartila con QR y sumá clientes fieles.",
+    "Ingresá a tu cuenta de cliente, aliado o administrador de Fidelización.",
 };
 
 export const viewport: Viewport = {
