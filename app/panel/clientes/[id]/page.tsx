@@ -14,12 +14,13 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
   if (!user) redirect("/login");
   const { data: business } = await supabase.from("businesses").select("id").eq("owner_user_id", user.id).maybeSingle();
   if (!business) redirect("/panel");
+  const businessId = business.id;
 
   const { data: card } = await supabase
     .from("loyalty_cards")
     .select("*,loyalty_members!inner(name,phone,email),loyalty_programs!inner(card_title,goal)")
     .eq("id", id)
-    .eq("business_id", business.id)
+    .eq("business_id", businessId)
     .maybeSingle();
   if (!card) notFound();
 
@@ -32,7 +33,31 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
 
   const m = card.loyalty_members as unknown as { name: string; phone: string; email: string | null };
   const p = card.loyalty_programs as unknown as { card_title: string; goal: number };
+  const sourceLabel = (t: { source: string; ip_city?: string | null }) => {
+    if (t.source === "auto_scan") return t.ip_city ? `QR/NFC · ${t.ip_city}` : "QR/NFC";
+    if (t.source === "scan") return "Escaneo";
+    if (t.source === "phone_lookup") return "Teléfono";
+    return "Manual";
+  };
   const cardUrl = `${process.env.NEXT_PUBLIC_APP_URL ?? ""}/t/${card.token}`;
+
+  async function clearSuspicion() {
+    "use server";
+    const s = await createClient();
+    const { data: me } = await s.auth.getUser();
+    const { data: biz } = await s
+      .from("businesses")
+      .select("status")
+      .eq("owner_user_id", me.user?.id ?? "")
+      .maybeSingle();
+    if (biz?.status === "suspended") redirect("/panel");
+    await s
+      .from("loyalty_cards")
+      .update({ suspicious_at: null, suspicious_reason: null })
+      .eq("id", id)
+      .eq("business_id", businessId);
+    redirect(`/panel/clientes/${id}`);
+  }
 
   async function deleteMember() {
     "use server";
@@ -55,6 +80,23 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
       <div>
         <h1 style={{ fontSize: 24, fontWeight: 800 }}>{m.name}</h1>
         <p style={{ color: "#9A9A96", fontSize: 14 }}>{m.phone}{m.email ? ` · ${m.email}` : ""}</p>
+        {card.suspicious_at ? (
+          <Card style={{ marginTop: 12, borderColor: "#fbbf24" }}>
+            <h3 style={{ fontWeight: 800, color: "#fbbf24" }}>⚠️ Actividad sospechosa</h3>
+            <p style={{ fontSize: 14, marginTop: 6 }}>
+              {card.suspicious_reason ?? "Se detectaron escaneos inusuales."}
+            </p>
+            <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 4 }}>
+              Detectado: {new Date(card.suspicious_at).toLocaleString("es-AR")}.
+              Revisá el origen de los escaneos en el historial antes de continuar.
+            </p>
+            <form action={clearSuspicion} style={{ marginTop: 10 }}>
+              <button type="submit" style={{ color: "#fbbf24", fontSize: 14, background: "none", border: "1px solid #fbbf24", borderRadius: 8, padding: "8px 12px", cursor: "pointer" }}>
+                Marcar como revisado
+              </button>
+            </form>
+          </Card>
+        ) : null}
         <Card style={{ marginTop: 12 }}>
           <p><strong>{p.card_title}</strong> · {card.balance} de {p.goal} · 🏆 {card.rewards_available} premio(s)</p>
           <p style={{ marginTop: 10, fontSize: 14 }}>
@@ -73,11 +115,12 @@ export default async function ClienteDetalle({ params }: { params: Promise<{ id:
         </Card>
         <h2 style={{ fontWeight: 800, marginTop: 20, marginBottom: 8 }}>Historial</h2>
         <Table
-          head={["Fecha", "Tipo", "Cant.", "Nota"]}
+          head={["Fecha", "Tipo", "Cant.", "Origen", "Nota"]}
           rows={(tx ?? []).map((t) => [
             new Date(t.created_at).toLocaleString("es-AR"),
             t.type === "earn" ? "Suma" : t.type === "redeem" ? "Canje" : "Ajuste",
             String(t.amount),
+            sourceLabel(t),
             t.note ?? "—",
           ])}
         />

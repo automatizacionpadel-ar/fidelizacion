@@ -37,8 +37,16 @@ export type ProgramDraft = {
   font_family: string;
   template: string;
   stamp_cooldown_minutes: number;
+  max_auto_earns_per_day: number;
+  auto_scan_window_start: string | null;
+  auto_scan_window_end: string | null;
   status: string;
 };
+
+function normalizeTime(value: string | null | undefined): string | null {
+  if (!value) return null;
+  return String(value).slice(0, 5);
+}
 
 const defaults: ProgramDraft = {
   name: "",
@@ -63,7 +71,10 @@ const defaults: ProgramDraft = {
   stamp_image_url: null,
   font_family: "system",
   template: "moderno",
-  stamp_cooldown_minutes: 60,
+  stamp_cooldown_minutes: 240,
+  max_auto_earns_per_day: 1,
+  auto_scan_window_start: null,
+  auto_scan_window_end: null,
   status: "draft",
 };
 
@@ -84,7 +95,13 @@ export function ProgramForm({
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [previewTab, setPreviewTab] = useState<"card" | "capture">("card");
-  const [d, setD] = useState<ProgramDraft>({ ...defaults, ...initial });
+  const [d, setD] = useState<ProgramDraft>({
+    ...defaults,
+    ...initial,
+    max_auto_earns_per_day: initial?.max_auto_earns_per_day ?? defaults.max_auto_earns_per_day,
+    auto_scan_window_start: normalizeTime(initial?.auto_scan_window_start),
+    auto_scan_window_end: normalizeTime(initial?.auto_scan_window_end),
+  });
   const [saving, setSaving] = useState(false);
   const [publishing, setPublishing] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -337,6 +354,47 @@ export function ProgramForm({
               <div><Label>Tiempo mínimo entre {unit} (min)</Label><Input type="number" min={0} max={1440} value={d.stamp_cooldown_minutes} onChange={(e) => set("stamp_cooldown_minutes", Number(e.target.value))} /></div>
             </div>
             <div><Label>Condiciones (corto)</Label><Input value={d.terms} onChange={(e) => set("terms", e.target.value)} placeholder="Ej. Válido de lunes a viernes." /></div>
+
+            <div style={{ border: "1px solid #3D3D3B", borderRadius: 12, padding: 14 }}>
+              <p style={{ fontWeight: 800, fontSize: 14 }}>🛡️ Seguridad del escaneo automático</p>
+              <p style={{ color: "#9A9A96", fontSize: 13, marginTop: 4, lineHeight: 1.5 }}>
+                Aplica al QR/NFC que escanea el cliente. No agrega pasos para el cliente ni para el empleado.
+                El cooldown de arriba es el tiempo mínimo entre {unit}.
+              </p>
+              <div className="grid gap-4 md:grid-cols-3" style={{ marginTop: 12 }}>
+                <div>
+                  <Label>Máximo de {unit} automáticos por día</Label>
+                  <Input
+                    type="number"
+                    min={0}
+                    max={50}
+                    value={d.max_auto_earns_per_day}
+                    onChange={(e) => set("max_auto_earns_per_day", Number(e.target.value))}
+                  />
+                  <p style={{ fontSize: 12, color: "#9A9A96", marginTop: 4 }}>0 = sin límite diario.</p>
+                </div>
+                <div>
+                  <Label>Permitir desde (opcional)</Label>
+                  <Input
+                    type="time"
+                    value={d.auto_scan_window_start ?? ""}
+                    onChange={(e) => set("auto_scan_window_start", e.target.value || null)}
+                  />
+                </div>
+                <div>
+                  <Label>Permitir hasta (opcional)</Label>
+                  <Input
+                    type="time"
+                    value={d.auto_scan_window_end ?? ""}
+                    onChange={(e) => set("auto_scan_window_end", e.target.value || null)}
+                  />
+                </div>
+              </div>
+              <p style={{ fontSize: 12, color: "#9A9A96", marginTop: 8 }}>
+                Dejá el horario vacío para permitir las 24 h. Se usa la hora de Argentina.
+                Si el local cierra después de medianoche (ej. 18:00 → 02:00), también funciona.
+              </p>
+            </div>
           </div>
         )}
 

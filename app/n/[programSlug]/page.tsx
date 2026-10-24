@@ -6,6 +6,7 @@ import { EnrollForm } from "@/components/loyalty/EnrollForm";
 import { AccountSuspended } from "@/components/loyalty/AccountSuspended";
 import { VirtualCard } from "@/components/loyalty/VirtualCard";
 import { deviceCookieName } from "@/lib/loyalty/device";
+import { getScanContext } from "@/lib/loyalty/scanContext";
 import { syncCardWallet } from "@/lib/wallet/syncCard";
 import { notifyN8n } from "@/lib/loyalty/notify";
 
@@ -24,7 +25,8 @@ type EarnResult = {
 
 // Una sola URL para QR y NFC: al cargarla resolvemos alta (cliente nuevo) o
 // sellado automático (cliente ya registrado en este dispositivo), sin ningún
-// paso manual del lado del negocio. El único freno es el cooldown por programa.
+// paso manual del lado del negocio. Los frenos viven en la DB: cooldown,
+// máximo diario, ventana horaria, rate limit por IP y detección de anomalías.
 export default async function AutoPage({ params }: { params: Promise<{ programSlug: string }> }) {
   const { programSlug } = await params;
   const admin = createAdminClient();
@@ -80,8 +82,42 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
   }
 
   // ===== Rama de sellado: el GET ejecuta la transacción (con cooldown) =====
-  const { data: earned } = await admin.rpc("loyalty_earn_auto", { p_card_id: card.id, p_source: "auto_scan" });
-  const result = (earned ?? {}) as EarnResult;
+  const scan = await getScanContext();
+
+  // Rate limit por IP atómico en DB (no en memoria: serverless no lo comparte).
+  // 30 escaneos cada 10 minutos por IP: holgado para locales con Wi-Fi compartido.
+  if (scan.ip) {
+    const { data: allowed } = await admin.rpc("rate_limit_hit", {
+      p_key: `scan:${scan.ip}`,
+      p_limit: 30,
+      p_window_seconds: 600,
+    });
+    if (allowed === false) {
+      return (
+        <div style={{ background: program.background_color ?? "#20201F", minHeight: "100dvh", color: program.text_color ?? "#F0F0EE" }}>
+          <div className="w-[92%] mx-auto" style={{ maxWidth: 480, paddingTop: "max(24px, env(safe-area-inset-top))", paddingBottom: "max(32px, env(safe-area-inset-bottom))", textAlign: "center" }}>
+            <h1 style={{ fontSize: 22, fontWeight: 800, marginTop: 40 }}>Demasiados escaneos seguidos</h1>
+            <p style={{ fontSize: 15, opacity: 0.8, marginTop: 10 }}>
+              Esperá unos minutos y volvé a escanear el QR o el tag del local.
+            </p>
+          </div>
+        </div>
+      );
+    }
+  }
+
+  const { data: earned, error: earnError } = await admin.rpc("loyalty_earn_auto", {
+    p_card_id: card.id,
+    p_source: "auto_scan",
+    p_ip: scan.ip,
+    p_city: scan.city,
+    p_country: scan.country,
+    p_lat: scan.latitude,
+    p_lon: scan.longitude,
+    p_user_agent: scan.userAgent,
+  });
+  if (earnError) console.error("loyalty_earn_auto", earnError.message);
+  const result = (earned ?? (earnError ? { error: "No pudimos sumar tu sello. Probá de nuevo en unos minutos." } : {})) as EarnResult;
   const didEarn = result.ok === true;
   const won = didEarn ? result.won ?? 0 : 0;
   const balance = didEarn ? result.balance ?? card.balance : card.balance;
@@ -135,6 +171,10 @@ export default async function AutoPage({ params }: { params: Promise<{ programSl
         {didEarn ? (
           <p style={{ color: "#9A9A96", fontSize: 12, marginTop: 16, textAlign: "center" }}>
             Tu tarjeta en Google Wallet se actualiza sola en unos segundos.
+          </p>
+        ) : result.error ? (
+          <p style={{ color: "#9A9A96", fontSize: 13, marginTop: 16, textAlign: "center" }}>
+            {result.error}
           </p>
         ) : null}
       </div>

@@ -17,7 +17,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
 
   const query = supabase
     .from("loyalty_cards")
-    .select("id,balance,rewards_available,last_earn_at,loyalty_members!inner(name,phone),loyalty_programs!inner(card_title)")
+    .select("id,balance,rewards_available,last_earn_at,suspicious_at,suspicious_reason,loyalty_members!inner(name,phone),loyalty_programs!inner(card_title)")
     .eq("business_id", business.id)
     .order("last_earn_at", { ascending: false, nullsFirst: false })
     .limit(100);
@@ -28,6 +28,7 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
     const m = c.loyalty_members as unknown as { name: string; phone: string };
     return (m.name + " " + m.phone).toLowerCase().includes(q.toLowerCase());
   });
+  const suspiciousCount = filtered.filter((c) => Boolean(c.suspicious_at)).length;
 
   return (
     <div>
@@ -41,6 +42,14 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
           <a href="/api/loyalty/members/export"><Button variant="secondary">Exportar CSV</Button></a>
         </div>
       </div>
+      {suspiciousCount > 0 && (
+        <Card style={{ marginTop: 16, borderColor: "#fbbf24" }}>
+          <p style={{ fontSize: 14 }}>
+            ⚠️ <strong>{suspiciousCount}</strong> cliente(s) con actividad sospechosa.
+            Entrá al detalle para ver el motivo y marcar la tarjeta como revisada.
+          </p>
+        </Card>
+      )}
       <div style={{ marginTop: 16 }}>
         <Table
           head={["Cliente", "Teléfono", "Programa", "Progreso", "Premios", ""]}
@@ -48,7 +57,14 @@ export default async function ClientesPage({ searchParams }: { searchParams: Pro
             const m = c.loyalty_members as unknown as { name: string; phone: string };
             const p = c.loyalty_programs as unknown as { card_title: string };
             return [
-              m.name,
+              <span key="name">
+                {m.name}
+                {c.suspicious_at ? (
+                  <span style={{ marginLeft: 6, fontSize: 11, color: "#fbbf24", border: "1px solid #fbbf24", borderRadius: 999, padding: "1px 6px", whiteSpace: "nowrap" }}>
+                    ⚠️ Revisar
+                  </span>
+                ) : null}
+              </span>,
               m.phone,
               p.card_title,
               `${c.balance}`,

@@ -23,7 +23,10 @@ export const programSchema = z.object({
   stamp_image_url: z.string().url().nullable().optional(),
   font_family: z.enum(["system", "inter", "poppins", "montserrat", "playfair"]).default("system"),
   template: z.enum(["moderno", "clasico", "glass", "futurista"]).default("moderno"),
-  stamp_cooldown_minutes: z.number().int().min(0).max(1440).default(60),
+  stamp_cooldown_minutes: z.number().int().min(0).max(1440).default(240),
+  max_auto_earns_per_day: z.number().int().min(0).max(50).optional(),
+  auto_scan_window_start: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Hora inválida (HH:MM)").nullable().optional(),
+  auto_scan_window_end: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d(:[0-5]\d)?$/, "Hora inválida (HH:MM)").nullable().optional(),
   status: z.enum(["draft", "active", "paused"]).default("draft"),
   slug: z.string().min(2).max(60).regex(/^[a-z0-9-]+$/).optional(),
 });

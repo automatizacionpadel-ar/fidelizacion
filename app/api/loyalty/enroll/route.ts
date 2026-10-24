@@ -9,22 +9,21 @@ import { notifyN8n } from "@/lib/loyalty/notify";
 import { deviceCookieName, deviceCookieOptions } from "@/lib/loyalty/device";
 import { randomBytes } from "crypto";
 
-// Rate limit simple en memoria (por IP): 20 altas por minuto.
-const hits = new Map<string, { count: number; reset: number }>();
-function rateLimited(ip: string) {
-  const now = Date.now();
-  const h = hits.get(ip);
-  if (!h || now > h.reset) {
-    hits.set(ip, { count: 1, reset: now + 60_000 });
-    return false;
-  }
-  h.count += 1;
-  return h.count > 20;
-}
-
 export async function POST(req: Request) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown";
-  if (rateLimited(ip)) return NextResponse.json({ error: "Demasiados intentos. Esperá un minuto." }, { status: 429 });
+  const admin = createAdminClient();
+
+  // Rate limit atómico en DB: 20 altas por minuto por IP.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  if (ip) {
+    const { data: allowed } = await admin.rpc("rate_limit_hit", {
+      p_key: `enroll:${ip}`,
+      p_limit: 20,
+      p_window_seconds: 60,
+    });
+    if (allowed === false) {
+      return NextResponse.json({ error: "Demasiados intentos. Esperá un minuto." }, { status: 429 });
+    }
+  }
 
   const json = await req.json().catch(() => null);
   const parsed = enrollSchema.safeParse(json);
@@ -33,7 +32,6 @@ export async function POST(req: Request) {
   }
   const { slug, name, email, card_token } = parsed.data;
 
-  const admin = createAdminClient();
   const { data: program } = await admin
     .from("loyalty_programs")
     .select("id,business_id,status,card_title,card_type,goal,stamp_icon,stamp_image_url,reward_description,background_color,text_color,accent_color,hero_image_url")
